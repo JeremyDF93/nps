@@ -1,8 +1,11 @@
 #pragma semicolon 1
 #include <sourcemod>
+#include <left4downtown>
+#include <colors>
 
-#define NYX_DEBUG 2
-#define NYX_PLUGIN_NAME "Nyx"
+#define NYX_DEBUG          2
+#define NYX_PLUGIN_NAME    "Nyx"
+#define NYX_PLUGIN_VERSION "1.0"
 #include <nyxtools>
 
 #pragma newdecls required
@@ -11,7 +14,7 @@ public Plugin myinfo = {
 	name = "Nyxtools - L4D2 Point System",
 	author = "Kiwi, JeremyDF93",
 	description = "",
-	version = "1.0",
+	version = NYX_PLUGIN_VERSION,
 	url = "https://praisethemoon.com/"
 };
 
@@ -38,23 +41,31 @@ enum NyxData {
 
 KeyValues g_hData;
 
+int g_iMenuTarget[MAXPLAYERS + 1];
 int g_iPlayerPoints[MAXPLAYERS + 1];
-any g_ePlayerData[MAXPLAYERS + 1][NyxData];
 
 ///
 /// ConVars
 ///
 
-
+ConVar nyx_ps_version;
+ConVar nyx_ps_start_points;
+ConVar nyx_ps_max_points;
 
 ///
-/// Plugin Interface
+/// Plugin Interfaces
 ///
 
 public void OnPluginStart() {
 	LoadTranslations("common.phrases");
+	LoadTranslations("nyx_pointsystem.phrases");
 
 	RegConsoleCmd("sm_buy", ConCmd_Buy);
+	RegConsoleCmd("sm_gp", ConCmd_GivePoints);
+
+	nyx_ps_version = CreateConVar("nyx_ps_version", NYX_PLUGIN_VERSION);
+	nyx_ps_max_points = CreateConVar("nyx_ps_max_points", "120");
+	nyx_ps_start_points = CreateConVar("nyx_ps_start_points", "10");
 
 	char path[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, path, sizeof(path), "configs/nyx_pointsystem/options.cfg");
@@ -77,10 +88,20 @@ public void OnPluginStart() {
 		SetFailState("Error in %s: File not found, corrupt or in the wrong format", path);
 		return;
 	}
+
+	InitVariables();
 }
 
 public void OnPluginEnd() {
 
+}
+
+///
+/// Extention interfaces
+///
+
+public Action L4D_OnFirstSurvivorLeftSafeArea(int client) {
+	return Plugin_Continue;
 }
 
 ///
@@ -95,6 +116,13 @@ public void OnPluginEnd() {
 
 public Action ConCmd_Buy(int client, int args) {
 	if (args < 1) {
+		if (!IsValidClient(client)) {
+			NyxMsgReply(client, "Cannot display buy menu to console");
+		} else if (g_iPlayerPoints[client] <= 0) {
+			CPrintToChat(client, "%t", "Insufficient Points", NYX_PLUGIN_NAME);
+		} else {
+			Display_GivePointsMenu(client);
+		}
 		if (!IsValidClient(client)) {
 			NyxMsgReply(client, "Cannot display buy menu to console");
 			return Plugin_Handled;
@@ -123,6 +151,42 @@ public Action ConCmd_Buy(int client, int args) {
 		NyxMsgDebug("team_name: %s, mission_limit: %i",
 							data[NyxData_TeamName],
 							data[NyxData_MissionLimit]);
+	}
+
+	return Plugin_Handled;
+}
+
+public Action ConCmd_GivePoints(int client, int args) {
+	if (args < 1) {
+		if (!IsValidClient(client)) {
+			NyxMsgReply(client, "Cannot display buy menu to console");
+		} else if (g_iPlayerPoints[client] <= 0) {
+			CPrintToChat(client, "%t", "Insufficient Points", NYX_PLUGIN_NAME);
+		} else {
+			Display_GivePointsMenu(client);
+		}
+
+		return Plugin_Handled;
+	}
+
+	int target = GetCmdTarget(1, client, false, false);
+	int amount = GetCmdIntEx(2, 1, 120, 5);
+
+	if (g_iPlayerPoints[client] < amount) {
+		CPrintToChat(client, "%t", "Insufficient Points", NYX_PLUGIN_NAME);
+	} else if (client == target) {
+		CPrintToChat(client, "%t", "Sent Self Points", NYX_PLUGIN_NAME);
+	} else if (GetClientTeam(client) != GetClientTeam(target)) {
+		CPrintToChat(client, "%t", "Sent Wrong Team Points", NYX_PLUGIN_NAME);
+	} else {
+		int spent = GiveClientPoints(target, amount);
+		g_iPlayerPoints[client] -= spent;
+		CPrintToChatTeam(client, "%t", "Sent Points", NYX_PLUGIN_NAME, client, spent, target);
+		CPrintToChat(client, "%t", "My Points", NYX_PLUGIN_NAME, g_iPlayerPoints[client]);
+
+		if (spent == 0) {
+			CPrintToChat(client, "%t", "Sent Zero Points", NYX_PLUGIN_NAME);
+		}
 	}
 
 	return Plugin_Handled;
@@ -269,12 +333,43 @@ void Display_ConfirmMenu(int client, const char[] info) {
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
+void Display_GivePointsMenu(int client) {
+	Menu menu = new Menu(MenuHandler_GivePoints);
+	menu.SetTitle("Select Target");
+	menu.ExitBackButton = true;
+	AddTeamToMenu(menu, client);
+	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+void Display_GiveAmountMenu(int client) {
+	Menu menu = new Menu(MenuHandler_GiveAmount);
+	menu.SetTitle("Select Amount");
+	menu.ExitBackButton = true;
+
+	if (g_iPlayerPoints[client] >= 10) menu.AddItem("10", "10 Points");
+	if (g_iPlayerPoints[client] >= 20) menu.AddItem("20", "20 Points");
+	if (g_iPlayerPoints[client] >= 30) menu.AddItem("30", "30 Points");
+
+	char info[16], display[64];
+	IntToString(g_iPlayerPoints[client] / 2, info, sizeof(info));
+	Format(display, sizeof(display), "%d Points (half)", g_iPlayerPoints[client] / 2);
+	menu.AddItem(info, display);
+
+	IntToString(g_iPlayerPoints[client], info, sizeof(info));
+	Format(display, sizeof(display), "%d Points (all)", g_iPlayerPoints[client]);
+	menu.AddItem(info, display);
+
+	menu.Display(client, MENU_TIME_FOREVER);
+}
+
 public int MenuHandler_MainMenu(Menu menu, MenuAction action, int param1, int param2) {
 	if (action == MenuAction_End) {
 		delete menu;
 	} else if (action == MenuAction_Cancel) {
 		if (param2 == MenuCancel_ExitBack) {
-			if (IsValidClient(param1)) Display_MainMenu(param1);
+			if (IsValidClient(param1)) {
+				Display_MainMenu(param1);
+			}
 		}
 
 		return;
@@ -294,9 +389,12 @@ public int MenuHandler_ConfirmMenu(Menu menu, MenuAction action, int param1, int
 	if (action == MenuAction_End) {
 		delete menu;
 	} else if (action == MenuAction_Cancel) {
-		if (IsValidClient(param1)) {
-			Display_MainMenu(param1);
+		if (param2 == MenuCancel_ExitBack) {
+			if (IsValidClient(param1)) {
+				Display_MainMenu(param1);
+			}
 		}
+
 		return;
 	} else if (action == MenuAction_Select) {
 		char info[32];
@@ -305,7 +403,7 @@ public int MenuHandler_ConfirmMenu(Menu menu, MenuAction action, int param1, int
 		if (IsValidClient(param1)) {
 			any data[NyxData];
 			GetItemData(info, data);
-			
+
 			NyxMsgDebug("group: %s, section: %s, name: %s, cost %i, shortcut: %s, command: %s, command_args: %s",
 								data[NyxData_Group],
 								data[NyxData_Section],
@@ -324,9 +422,137 @@ public int MenuHandler_ConfirmMenu(Menu menu, MenuAction action, int param1, int
 	return;
 }
 
+public int MenuHandler_GivePoints(Menu menu, MenuAction action, int param1, int param2) {
+	if (action == MenuAction_End) {
+		delete menu;
+	} else if (action == MenuAction_Cancel) {
+		if (param2 == MenuCancel_ExitBack) {
+			if (IsValidClient(param1)) {
+				Display_GivePointsMenu(param1);
+			}
+		}
+
+		return;
+	} else if (action == MenuAction_Select) {
+		char info[32];
+		menu.GetItem(param2, info, sizeof(info));
+		int userid = StringToInt(info);
+
+		if (GetClientOfUserId(userid) == 0) {
+			CPrintToChat(param1, "[%s] %t", NYX_PLUGIN_NAME, "Player no longer available");
+		} else {
+			g_iMenuTarget[param1] = userid;
+			Display_GiveAmountMenu(param1);
+			return;
+		}
+		
+		if (IsValidClient(param1)) {
+			Display_GivePointsMenu(param1);
+		}
+	}
+	
+	return;
+}
+
+public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int param2) {
+	if (action == MenuAction_End) {
+		delete menu;
+	} else if (action == MenuAction_Cancel) {
+		if (param2 == MenuCancel_ExitBack) {
+			if (IsValidClient(param1)) {
+				Display_GivePointsMenu(param1);
+			}
+		}
+
+		return;
+	} else if (action == MenuAction_Select) {
+		char info[32];
+		menu.GetItem(param2, info, sizeof(info));
+		int amount = StringToInt(info);
+
+		int target;
+		if ((target = GetClientOfUserId(g_iMenuTarget[param1])) == 0) {
+			CPrintToChat(param1, "[%s] %t", NYX_PLUGIN_NAME, "Player no longer available");
+		} else {
+			if (g_iPlayerPoints[param1] < amount) {
+				CPrintToChat(param1, "%t", "Insufficient Points", NYX_PLUGIN_NAME, amount);
+			} else if (param1 == target) {
+				CPrintToChat(param1, "%t", "Sent Self Points", NYX_PLUGIN_NAME);
+			} else if (GetClientTeam(param1) != GetClientTeam(target)) {
+				CPrintToChat(param1, "%t", "Sent Wrong Team Points", NYX_PLUGIN_NAME);
+			} else {
+				int spent = GiveClientPoints(target, amount);
+
+				g_iPlayerPoints[param1] -= spent;
+				CPrintToChatTeam(param1, "%t", "Sent Points", NYX_PLUGIN_NAME, param1, spent, target);
+				CPrintToChat(param1, "%t", "My Points", NYX_PLUGIN_NAME, g_iPlayerPoints[param1]);
+
+				if (spent == 0) {
+					CPrintToChat(param1, "%t", "Sent Zero Points", NYX_PLUGIN_NAME);
+				}
+			}
+		}
+		
+		if (IsValidClient(param1)) {
+			Display_GivePointsMenu(param1);
+		}
+	}
+	
+	return;
+}
+
+stock int AddTeamToMenu(Menu menu, int client) {
+	char user_id[12];
+	char name[MAX_NAME_LENGTH];
+	char display[MAX_NAME_LENGTH + 12];
+	
+	int num_clients;
+	
+	for (int i = 1; i <= MaxClients; i++) {
+		if (!IsValidClient(i)) continue;
+		if (i == client) continue;
+		if (GetClientTeam(i) != GetClientTeam(client)) continue;
+
+		IntToString(GetClientUserId(i), user_id, sizeof(user_id));
+		GetClientName(i, name, sizeof(name));
+		Format(display, sizeof(display), "%s", name);
+		menu.AddItem(user_id, display);
+
+		num_clients++;
+	}
+	
+	return num_clients;
+}
+
 ///
 /// Functions
 ///
+
+void InitVariables() {
+	for (int i = 1; i <= MaxClients; i++) {
+		g_iPlayerPoints[i] = nyx_ps_start_points.IntValue;
+	}
+}
+
+int GetClientPoints(int client) {
+	return g_iPlayerPoints[client];
+}
+
+int GiveClientPoints(int client, int points) {
+	int total = g_iPlayerPoints[client] + points;
+
+	if (total > nyx_ps_max_points.IntValue) {
+		int min = MathMin(points, total - nyx_ps_max_points.IntValue);
+		int max = MathMax(points, total - nyx_ps_max_points.IntValue);
+		int spent = max - min;
+
+		g_iPlayerPoints[client] += spent;
+		return spent;
+	}
+
+	g_iPlayerPoints[client] += points;
+	return points;
+}
 
 bool GetItemData(const char[] item_name, any[NyxData] data) {
 	g_hData.Rewind();
@@ -394,4 +620,14 @@ bool GetItemData(const char[] item_name, any[NyxData] data) {
 /// Libs
 ///
 
+stock void CPrintToChatTeam(int client, char[] format, any ...) {
+	char buffer[256];
+	VFormat(buffer, sizeof(buffer), format, 3);
 
+	for (int i = 1; i <= MaxClients; i++) {
+		if (!IsValidClient(i, true)) continue;
+		if (GetClientTeam(i) != GetClientTeam(client)) continue;
+
+		CPrintToChat(i, buffer);
+	}
+}

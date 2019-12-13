@@ -1,0 +1,34 @@
+"Phrases"
+{
+	"Sent Points"
+	{
+		"#format"   "{1:N},{2:i},{3:N}"
+		"en"        "{lightgreen}{1}{default} sent {olive}{2}{default} points to {lightgreen}{3}{default}."
+	}
+
+	"Sent Self Points"
+	{
+		"en"        "{blue}You can't send points to yourself!"
+	}
+
+	"Sent Wrong Team Points"
+	{
+		"en"        "{red}You can't give points so someone on the other team!"
+	}
+
+	"Sent Zero Points"
+	{
+		"en"        "{blue}You sent zero points."
+	}
+
+	"Insufficient Points"
+	{
+		"en"        "{blue}You don't have enough points."
+	}
+
+  "My Points"
+	{
+		"#format"   "{1:i}"
+		"en"        "{blue}You have {olive}{1}{blue} points left."
+	}
+}
