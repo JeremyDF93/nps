@@ -31,4 +31,10 @@
 		"#format"   "{1:i}"
 		"en"        "{blue}You have {olive}{1}{blue} points left."
 	}
+	
+	"Max Points"
+	{
+		"#format"   "{1:i},{2:i}"
+		"en"        "You have received the maximum number of points [{1}/{2}]"
+	}
 }
