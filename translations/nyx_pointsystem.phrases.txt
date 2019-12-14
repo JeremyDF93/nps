@@ -3,7 +3,7 @@
 	"Reward"
 	{
 		"#format"   "{1:i}"
-		"en"        "{olive}+{1}{default} points rewarded."
+		"en"        "{olive}+{1}{default} points awarded."
 	}
 	"Sent Points"
 	{
@@ -53,10 +53,6 @@
 	{
 		"en"        "{red}You must be incapacitated to do this."
 	}
-	"Must Be Grabbed"
-	{
-		"en"        "{red}You must be grabbed to do this."
-	}
 	"Item Wrong Team"
 	{
 		"en"        "{red}You can only buy this item when on the other team!"
@@ -70,5 +66,121 @@
 	{
 		"#format"   "{1:N},{2:i}"
 		"en"        "{lightgreen}{1}{default} currently has {olive}{2}{default} points."
+	}
+	
+	"Killed Special Infected"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
+	}
+	"Killed Survivor"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
+	}
+	"Hurt Player"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for hurting {lightgreen}{2}{default}."
+	}
+	"Incapacitated Player"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for incapacitating {lightgreen}{2}{default}."
+	}
+	"Bile Tank"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for using a bile jar on {lightgreen}{2}{default}."
+	}
+	"Bile Player"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for vomiting on {lightgreen}{2}{default}."
+	}
+	"Kill Streak"
+	{
+		"#format"   "{1:i},{2:i}"
+		"en"        "{olive}+{1}{default} points awarded for killing {olive}{2}{default} infected."
+	}
+	"Headshot Streak"
+	{
+		"#format"   "{1:i},{2:i}"
+		"en"        "{olive}+{1}{default} points awarded for getting {olive}{2}{default} headshots!"
+	}
+	"Killed Tank"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
+	}
+	"Killed Tank Solo"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default} solo."
+	}
+	"Killed Witch"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
+	}
+	"Killed Witch Oneshot"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default} in one shot."
+	}
+	"Choke Player"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for choking {lightgreen}{2}{default}."
+	}
+	"Pounce Player"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for pouncing {lightgreen}{2}{default}."
+	}
+	"Ride Player"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for riding {lightgreen}{2}{default}."
+	}
+	"Carry Player"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for carrying {lightgreen}{2}{default}."
+	}
+	"Impact Player"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for inpacting {lightgreen}{2}{default}."
+	}
+	"Healed Player"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for healing {lightgreen}{2}{default}."
+	}
+	"Healed Player Partial"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for partially healing {lightgreen}{2}{default}."
+	}
+	"Protected Player"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for protecting {lightgreen}{2}{default}."
+	}
+	"Revived Player"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for reviving {lightgreen}{2}{default}."
+	}
+	"Revived Player From Ledge"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for saving {lightgreen}{2}{default} from a ledge."
+	}
+	"Defibrillator Used"
+	{
+		"#format"   "{1:i},{2:N}"
+		"en"        "{olive}+{1}{default} points awarded for reviving {lightgreen}{2}{default} from the dead."
 	}
 }
