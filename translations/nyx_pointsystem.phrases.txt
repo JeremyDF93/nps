@@ -26,7 +26,7 @@
 	{
 		"en"        "{red}You don't have enough points."
 	}
-  "My Points"
+  "Points Left"
 	{
 		"#format"   "{1:i}"
 		"en"        "You have {olive}{1}{default} points left."
@@ -60,5 +60,15 @@
 	"Item Wrong Team"
 	{
 		"en"        "{red}You can only buy this item when on the other team!"
+	}
+	"Show Points"
+	{
+		"#format"   "{1:i}"
+		"en"        "You currently have {olive}{1}{default} points."
+	}
+	"Show Points Other"
+	{
+		"#format"   "{1:N},{2:i}"
+		"en"        "{lightgreen}{1}{default} currently has {olive}{2}{default} points."
 	}
 }

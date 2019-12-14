@@ -18,9 +18,14 @@ public Plugin myinfo = {
 	url = "https://praisethemoon.com/"
 };
 
-///
-/// Enums
-///
+/***
+ *        ______                          
+ *       / ____/___  __  ______ ___  _____
+ *      / __/ / __ \/ / / / __ `__ \/ ___/
+ *     / /___/ / / / /_/ / / / / / (__  ) 
+ *    /_____/_/ /_/\__,_/_/ /_/ /_/____/  
+ *                                        
+ */
 
 enum NyxData {
 		String:Data_Group[64],
@@ -50,12 +55,19 @@ enum NyxPlayer {
 
 enum NyxGame {
 	Game_MaxPoints,
-	Game_StartPoints
+	Game_StartPoints,
+	Float:Game_TankTimeout,
+	bool:Game_AllowTank
 }
 
-///
-/// Globals
-///
+/***
+ *       ________      __          __    
+ *      / ____/ /___  / /_  ____ _/ /____
+ *     / / __/ / __ \/ __ \/ __ `/ / ___/
+ *    / /_/ / / /_/ / /_/ / /_/ / (__  ) 
+ *    \____/_/\____/_.___/\__,_/_/____/  
+ *                                       
+ */
 
 KeyValues g_hData;
 KeyValues g_hConfig;
@@ -64,18 +76,24 @@ int g_iMenuTarget[MAXPLAYERS + 1];
 any g_aPlayerStorage[MAXPLAYERS + 1][NyxPlayer];
 int g_iGameSettings[NyxGame];
 
-///
-/// Plugin Interfaces
-///
+/***
+ *        ____  __            _          ____      __            ____              
+ *       / __ \/ /_  ______ _(_)___     /  _/___  / /____  _____/ __/___ _________ 
+ *      / /_/ / / / / / __ `/ / __ \    / // __ \/ __/ _ \/ ___/ /_/ __ `/ ___/ _ \
+ *     / ____/ / /_/ / /_/ / / / / /  _/ // / / / /_/  __/ /  / __/ /_/ / /__/  __/
+ *    /_/   /_/\__,_/\__, /_/_/ /_/  /___/_/ /_/\__/\___/_/  /_/  \__,_/\___/\___/ 
+ *                  /____/                                                         
+ */
 
 public void OnPluginStart() {
 	LoadTranslations("common.phrases");
 	LoadTranslations("nyx_pointsystem.phrases");
-	//LoadTranslations("points_system.phrases");
 
 	// Console Commands
 	RegConsoleCmd("sm_buy", ConCmd_Buy);
 	RegConsoleCmd("sm_gp", ConCmd_GivePoints);
+	RegConsoleCmd("sm_points", ConCmd_ShowPoints);
+	RegConsoleCmd("sm_tp", ConCmd_ShowTeamPoints);
 
 	// Admin commands
 	RegAdminCmd("nyx_givepoints", AdmCmd_GivePoints, ADMFLAG_ROOT, "nyx_givepoints <#userid|name> [points|5]");
@@ -121,6 +139,8 @@ public void OnPluginEnd() {
 void Init() {
 	g_iGameSettings[Game_MaxPoints] = GetConfigKeyInt("max_points", 120);
 	g_iGameSettings[Game_StartPoints] = GetConfigKeyInt("start_points", 10);
+	g_iGameSettings[Game_TankTimeout] = float(GetConfigKeyInt("tank_timeout", 70));
+	g_iGameSettings[Game_AllowTank] = false;
 
 	for (int i = 1; i <= MaxClients; i++) {
 		g_aPlayerStorage[i][Player_Points] = g_iGameSettings[Game_StartPoints];
@@ -133,17 +153,29 @@ void Init() {
 	}
 }
 
-///
-/// Extention interfaces
-///
+/***
+ *        ____      __            ____                    
+ *       /  _/___  / /____  _____/ __/___ _________  _____
+ *       / // __ \/ __/ _ \/ ___/ /_/ __ `/ ___/ _ \/ ___/
+ *     _/ // / / / /_/  __/ /  / __/ /_/ / /__/  __(__  ) 
+ *    /___/_/ /_/\__/\___/_/  /_/  \__,_/\___/\___/____/  
+ *                                                        
+ */
 
 public Action L4D_OnFirstSurvivorLeftSafeArea(int client) {
+	CreateTimer(g_iGameSettings[Game_TankTimeout], Timer_AllowTank);
+
 	return Plugin_Continue;
 }
 
-///
-/// Events
-///
+/***
+ *        ______                 __      
+ *       / ____/   _____  ____  / /______
+ *      / __/ | | / / _ \/ __ \/ __/ ___/
+ *     / /___ | |/ /  __/ / / / /_(__  ) 
+ *    /_____/ |___/\___/_/ /_/\__/____/  
+ *                                       
+ */
 
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
 	int victim = GetClientOfUserId(event.GetInt("userid"));
@@ -448,9 +480,27 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 	return Plugin_Continue;
 }
 
-///
-/// Admin Commands
-///
+/***
+ *      _______                         
+ *     /_  __(_)___ ___  ___  __________
+ *      / / / / __ `__ \/ _ \/ ___/ ___/
+ *     / / / / / / / / /  __/ /  (__  ) 
+ *    /_/ /_/_/ /_/ /_/\___/_/  /____/  
+ *                                      
+ */
+
+public Action Timer_AllowTank(Handle timer) {
+	g_iGameSettings[Game_AllowTank] = true;
+}
+
+/***
+ *        ___       __          _          ______                                          __    
+ *       /   | ____/ /___ ___  (_)___     / ____/___  ____ ___  ____ ___  ____ _____  ____/ /____
+ *      / /| |/ __  / __ `__ \/ / __ \   / /   / __ \/ __ `__ \/ __ `__ \/ __ `/ __ \/ __  / ___/
+ *     / ___ / /_/ / / / / / / / / / /  / /___/ /_/ / / / / / / / / / / / /_/ / / / / /_/ (__  ) 
+ *    /_/  |_\__,_/_/ /_/ /_/_/_/ /_/   \____/\____/_/ /_/ /_/_/ /_/ /_/\__,_/_/ /_/\__,_/____/  
+ *                                                                                               
+ */
 
 public Action AdmCmd_GivePoints(int client, int args) {
 	if (args < 1) {
@@ -495,9 +545,14 @@ public Action AdmCmd_ReloadConfig(int client, int args) {
 	return Plugin_Handled;
 }
 
-///
-/// Console Commands
-///
+/***
+ *       ______                       __        ______                                          __    
+ *      / ____/___  ____  _________  / /__     / ____/___  ____ ___  ____ ___  ____ _____  ____/ /____
+ *     / /   / __ \/ __ \/ ___/ __ \/ / _ \   / /   / __ \/ __ `__ \/ __ `__ \/ __ `/ __ \/ __  / ___/
+ *    / /___/ /_/ / / / (__  ) /_/ / /  __/  / /___/ /_/ / / / / / / / / / / / /_/ / / / / /_/ (__  ) 
+ *    \____/\____/_/ /_/____/\____/_/\___/   \____/\____/_/ /_/ /_/_/ /_/ /_/\__,_/_/ /_/\__,_/____/  
+ *                                                                                                    
+ */
 
 public Action ConCmd_Buy(int client, int args) {
 	if (args < 1) {
@@ -548,7 +603,7 @@ public Action ConCmd_GivePoints(int client, int args) {
 		int spent = GiveClientPoints(target, amount);
 		SubClientPoints(client, spent);
 		CPrintToChatTeam(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Sent Points", client, spent, target);
-		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "My Points", GetClientPoints(client));
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Points Left", GetClientPoints(client));
 
 		if (spent == 0) {
 			CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Sent Zero Points");
@@ -558,9 +613,33 @@ public Action ConCmd_GivePoints(int client, int args) {
 	return Plugin_Handled;
 }
 
-///
-/// Menus
-///
+public Action ConCmd_ShowPoints(int client, int args) {
+	if (IsValidClient(client)) {
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Show Points", GetClientPoints(client));
+	}
+
+	return Plugin_Handled;
+}
+
+public Action ConCmd_ShowTeamPoints(int client, int args) {
+	for (int i = 1; i <= MaxClients; i++) {
+		if (!IsValidClient(i, true)) continue;
+		if (GetClientTeam(i) != GetClientTeam(client)) continue;
+		if (i == client) continue;
+
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Show Points Other", i, GetClientPoints(i));
+	}
+	return Plugin_Handled;
+}
+
+/***
+ *        __  ___                     
+ *       /  |/  /__  ____  __  _______
+ *      / /|_/ / _ \/ __ \/ / / / ___/
+ *     / /  / /  __/ / / / /_/ (__  ) 
+ *    /_/  /_/\___/_/ /_/\__,_/____/  
+ *                                    
+ */
 
 void Display_MainMenu(int client) {
 	Menu menu = new Menu(MenuHandler_MainMenu);
@@ -879,9 +958,14 @@ stock int AddTeamToMenu(Menu menu, int client) {
 	return num_clients;
 }
 
-///
-/// Functions
-///
+/***
+ *        ______                 __  _                 
+ *       / ____/_  ______  _____/ /_(_)___  ____  _____
+ *      / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
+ *     / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  ) 
+ *    /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/  
+ *                                                     
+ */
 
 KeyValues GetKeyValuesFromFile(const char[] file, const char[] section, bool fail_state = true) {
 	char path[PLATFORM_MAX_PATH];
@@ -950,93 +1034,6 @@ void RewardTeamPoints(int team, const char[] key, const char[] type="reward") {
 
 		RewardPoints(i, key, type);
 	}
-}
-
-int GetConfigKeyInt(const char[] key, int def=-1) {
-	char buffer[256];
-	bool exists = GetConfigKeyString(key, buffer, sizeof(buffer));
-
-	if (exists) {
-		return StringToInt(buffer);
-	}
-
-	return def;
-}
-
-bool GetConfigKeyString(const char[] key, char[] buffer, int maxlength) {
-	g_hConfig.Rewind();
-
-	if (g_hConfig.JumpToKey(key)) {
-		g_hConfig.GetString(NULL_STRING, buffer, maxlength);
-
-		return true;
-	}
-
-	return false;
-}
-
-int GetRewardKeyInt(const char[] reward, const char[] key, int def=-1) {
-	char buffer[256];
-	bool exists = GetRewardKeyString(reward, key, buffer, sizeof(buffer));
-
-	if (exists) {
-		return StringToInt(buffer);
-	}
-
-	return def;
-}
-
-bool GetRewardKeyString(const char[] reward, const char[] key, char[] buffer, int maxlength) {
-	g_hConfig.Rewind();
-
-	if (!g_hConfig.JumpToKey("rewards")) {
-		NyxMsgDebug("missing 'rewards' section");
-		return false;
-	}
-
-	if (g_hConfig.JumpToKey(reward)) {
-		g_hConfig.GetString(key, buffer, maxlength);
-
-		return true;
-	}
-
-	return false;
-}
-
-int GetClientPoints(int client) {
-	return g_aPlayerStorage[client][Player_Points];
-}
-
-void SetClientPoints(int client, int points) {
-	g_aPlayerStorage[client][Player_Points] = points;
-}
-
-void AddClientPoints(int client, int points) {
-	g_aPlayerStorage[client][Player_Points] += points;
-}
-
-void SubClientPoints(int client, int points) {
-	g_aPlayerStorage[client][Player_Points] -= points;
-}
-
-int GiveClientPoints(int client, int points) {
-	int total = GetClientPoints(client) + points;
-
-	if (total > g_iGameSettings[Game_MaxPoints]) {
-		int min = MathMin(points, total - g_iGameSettings[Game_MaxPoints]);
-		int max = MathMax(points, total - g_iGameSettings[Game_MaxPoints]);
-		int spent = max - min;
-
-		if (spent >= g_iGameSettings[Game_MaxPoints]) {
-			return 0;
-		}
-
-		AddClientPoints(client, spent);
-		return spent;
-	}
-
-	AddClientPoints(client, points);
-	return points;
 }
 
 bool BuyItem(int client, const char[] item_name) {
@@ -1150,10 +1147,6 @@ bool GetItemData(const char[] item_name, any[NyxData] data) {
 	return false;
 }
 
-///
-/// Libs
-///
-
 void FakeClientCommandCheat(int client, const char[] cmd, const char[] args) {
 	char buffer[256];
 	Format(buffer, sizeof(buffer), "%s %s", cmd, args);
@@ -1167,6 +1160,102 @@ void FakeClientCommandCheat(int client, const char[] cmd, const char[] args) {
 	}
 
 	FakeClientCommand(client, buffer);
+}
+
+/***
+ *        __    _ __                    _          
+ *       / /   (_) /_  _________ ______(_)__  _____
+ *      / /   / / __ \/ ___/ __ `/ ___/ / _ \/ ___/
+ *     / /___/ / /_/ / /  / /_/ / /  / /  __(__  ) 
+ *    /_____/_/_.___/_/   \__,_/_/  /_/\___/____/  
+ *                                                 
+ */
+
+int GetConfigKeyInt(const char[] key, int def=-1) {
+	char buffer[256];
+	bool exists = GetConfigKeyString(key, buffer, sizeof(buffer));
+
+	if (exists) {
+		return StringToInt(buffer);
+	}
+
+	return def;
+}
+
+bool GetConfigKeyString(const char[] key, char[] buffer, int maxlength) {
+	g_hConfig.Rewind();
+
+	if (g_hConfig.JumpToKey(key)) {
+		g_hConfig.GetString(NULL_STRING, buffer, maxlength);
+
+		return true;
+	}
+
+	return false;
+}
+
+int GetRewardKeyInt(const char[] reward, const char[] key, int def=-1) {
+	char buffer[256];
+	bool exists = GetRewardKeyString(reward, key, buffer, sizeof(buffer));
+
+	if (exists) {
+		return StringToInt(buffer);
+	}
+
+	return def;
+}
+
+bool GetRewardKeyString(const char[] reward, const char[] key, char[] buffer, int maxlength) {
+	g_hConfig.Rewind();
+
+	if (!g_hConfig.JumpToKey("rewards")) {
+		NyxMsgDebug("missing 'rewards' section");
+		return false;
+	}
+
+	if (g_hConfig.JumpToKey(reward)) {
+		g_hConfig.GetString(key, buffer, maxlength);
+
+		return true;
+	}
+
+	return false;
+}
+
+int GetClientPoints(int client) {
+	return g_aPlayerStorage[client][Player_Points];
+}
+
+void SetClientPoints(int client, int points) {
+	g_aPlayerStorage[client][Player_Points] = points;
+}
+
+void AddClientPoints(int client, int points) {
+	g_aPlayerStorage[client][Player_Points] += points;
+}
+
+void SubClientPoints(int client, int points) {
+	g_aPlayerStorage[client][Player_Points] -= points;
+}
+
+int GiveClientPoints(int client, int points) {
+	int total = GetClientPoints(client) + points;
+
+	if (total > g_iGameSettings[Game_MaxPoints]) {
+		int min = MathMin(points, total - g_iGameSettings[Game_MaxPoints]);
+		int max = MathMax(points, total - g_iGameSettings[Game_MaxPoints]);
+		int spent = max - min;
+
+		if (spent >= g_iGameSettings[Game_MaxPoints]) {
+			return 0;
+		}
+
+		AddClientPoints(client, spent);
+		return spent;
+	}
+
+	AddClientPoints(client, points);
+	return points;
 }
 
 bool IsClientSurvivor(int client) {
