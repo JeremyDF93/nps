@@ -32,20 +32,25 @@ enum NyxData {
 		String:Data_TeamName[16],
 		Data_Cost,
 		Data_MissionLimit,
-		Data_HealMultiplier
-}
-
-enum NyxConVar {
-	Handle:ConVar_Version,
-	Handle:ConVar_StartPoints,
-	Handle:ConVar_MaxPoints,
+		Data_HealMultiplier,
+		bool:Data_MustBeAlive,
+		bool:Data_MustBeIncapacitated,
+		bool:Data_MustBeGrabbed
 }
 
 enum NyxPlayer {
 	Player_Points,
 	Player_Headshots,
 	Player_Kills,
-	Player_HurtCount
+	Player_HurtCount,
+	bool:Player_BurnedWitch,
+	bool:Player_BurnedTank,
+	Player_ProtectCount
+}
+
+enum NyxGame {
+	Game_MaxPoints,
+	Game_StartPoints
 }
 
 ///
@@ -54,18 +59,10 @@ enum NyxPlayer {
 
 KeyValues g_hData;
 KeyValues g_hConfig;
-ConVar g_hConVars[NyxConVar];
 
 int g_iMenuTarget[MAXPLAYERS + 1];
 any g_aPlayerStorage[MAXPLAYERS + 1][NyxPlayer];
-
-///
-/// ConVars
-///
-
-ConVar nyx_ps_version;
-ConVar nyx_ps_start_points;
-ConVar nyx_ps_max_points;
+int g_iGameSettings[NyxGame];
 
 ///
 /// Plugin Interfaces
@@ -81,12 +78,8 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_gp", ConCmd_GivePoints);
 
 	// Admin commands
-	RegAdminCmd("nyx_givepoints", AdmCmd_GivePoints, ADMFLAG_ROOT, "nyx_givepoints <#userid|name> [points]");
-
-	// ConVars
-	g_hConVars[ConVar_Version] = CreateConVar("nyx_ps_version", NYX_PLUGIN_VERSION);
-	nyx_ps_max_points = CreateConVar("nyx_ps_max_points", "120");
-	nyx_ps_start_points = CreateConVar("nyx_ps_start_points", "10");
+	RegAdminCmd("nyx_givepoints", AdmCmd_GivePoints, ADMFLAG_ROOT, "nyx_givepoints <#userid|name> [points|5]");
+	RegAdminCmd("nyx_reloadcfg", AdmCmd_ReloadConfig, ADMFLAG_ROOT);
 
 	// Register events
 	HookEvent("player_death", Event_PlayerDeath);
@@ -118,11 +111,26 @@ public void OnPluginStart() {
 	g_hConfig = GetKeyValuesFromFile("options.cfg", "config");
 
 	// Init global variables
-	InitVariables();
+	Init();
 }
 
 public void OnPluginEnd() {
 
+}
+
+void Init() {
+	g_iGameSettings[Game_MaxPoints] = GetConfigKeyInt("max_points", 120);
+	g_iGameSettings[Game_StartPoints] = GetConfigKeyInt("start_points", 10);
+
+	for (int i = 1; i <= MaxClients; i++) {
+		g_aPlayerStorage[i][Player_Points] = g_iGameSettings[Game_StartPoints];
+		g_aPlayerStorage[i][Player_Headshots] = 0;
+		g_aPlayerStorage[i][Player_Kills] = 0;
+		g_aPlayerStorage[i][Player_HurtCount] = 0;
+		g_aPlayerStorage[i][Player_BurnedWitch] = false;
+		g_aPlayerStorage[i][Player_BurnedTank] = false;
+		g_aPlayerStorage[i][Player_ProtectCount] = 0;
+	}
 }
 
 ///
@@ -140,7 +148,7 @@ public Action L4D_OnFirstSurvivorLeftSafeArea(int client) {
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
-	bool headshot = event.GetBool("headshot");
+	//bool headshot = event.GetBool("headshot");
 
 	if (!IsValidClient(attacker, true)) return Plugin_Continue;
 	if (IsClientSurvivor(attacker)) {
@@ -183,7 +191,7 @@ public Action Event_PlayerHurt(Event event, const char[] name, bool dontBroadcas
 }
 
 public Action Event_PlayerIncapacitated(Event event, const char[] name, bool dontBroadcast) {
-	int victim = GetClientOfUserId(event.GetInt("userid"));
+	//int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 
 	if (!IsValidClient(attacker, true)) return Plugin_Continue;
@@ -219,13 +227,11 @@ public Action Event_InfectedDeath(Event event, const char[] name, bool dontBroad
 	if (!IsValidClient(attacker, true)) return Plugin_Continue;
 	if (IsClientSurvivor(attacker)) {
 		int streak;
-		char streak_str[16]; 
 
 		if (headshot) {
 			g_aPlayerStorage[attacker][Player_Headshots]++;
 
-			GetRewardKeyValue("headshot_streak", "streak", streak_str, sizeof(streak_str));
-			streak = StringToInt(streak_str);
+			streak = GetRewardKeyInt("headshot_streak", "streak");
 			if (streak > 0) {
 				if ((g_aPlayerStorage[attacker][Player_Headshots] % streak) == 0) {
 					RewardPoints(attacker, "headshot_streak");
@@ -235,8 +241,7 @@ public Action Event_InfectedDeath(Event event, const char[] name, bool dontBroad
 
 		g_aPlayerStorage[attacker][Player_Kills]++;
 		
-		GetRewardKeyValue("kill_streak", "streak", streak_str, sizeof(streak_str));
-		streak = StringToInt(streak_str);
+		streak = GetRewardKeyInt("kill_streak", "streak");
 		if (streak > 0) {
 			if ((g_aPlayerStorage[attacker][Player_Kills] % streak) == 0) {
 				RewardPoints(attacker, "kill_streak");
@@ -261,6 +266,8 @@ public Action Event_TankKilled(Event event, const char[] name, bool dontBroadcas
 		RewardTeamPoints(GetClientTeam(attacker), "killed_tank");
 	}
 
+	g_aPlayerStorage[attacker][Player_BurnedWitch] = false;
+
 	return Plugin_Continue;
 }
 
@@ -276,6 +283,8 @@ public Action Event_WitchKilled(Event event, const char[] name, bool dontBroadca
 
 		RewardPoints(client, "killed_witch");
 	}
+
+	g_aPlayerStorage[client][Player_BurnedWitch] = false;
 
 	return Plugin_Continue;
 }
@@ -361,8 +370,11 @@ public Action Event_AwardEarned(Event event, const char[] name, bool dontBroadca
 	if (!IsClientSurvivor(client)) return Plugin_Continue;
 
 	if (award == 67) { // 67=Protect
-		NyxMsgDebug("TODO: give reward on every 6 protects");
-		RewardPoints(client, "protect_player"); // TODO: give reward on every 6 protects
+		g_aPlayerStorage[client][Player_ProtectCount]++;
+
+		if (g_aPlayerStorage[client][Player_ProtectCount] % 6 == 0) {
+			RewardPoints(client, "protect_player");
+		}
 	}
 
 	return Plugin_Continue;
@@ -371,7 +383,7 @@ public Action Event_AwardEarned(Event event, const char[] name, bool dontBroadca
 public Action Event_ReviveSuccess(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	int subject = GetClientOfUserId(event.GetInt("subject"));
-	bool lastlife = event.GetBool("lastlife");
+	//bool lastlife = event.GetBool("lastlife");
 	bool ledge_hang = event.GetBool("ledge_hang");
 
 	if (!IsValidClient(client)) return Plugin_Continue;
@@ -399,35 +411,23 @@ public Action Event_DefibrillatorUsed(Event event, const char[] name, bool dontB
 }
 
 public Action Event_ZombieIgnited(Event event, const char[] name, bool dontBroadcast) {
-	NyxMsgDebug("TODO: Event_ZombieIgnited");
+	int client = GetClientOfUserId(event.GetInt("userid"));
 
-	/*
-	decl String:sVictimName[30]; sVictimName[0] = '\0';
-	GetEventString(hEvent, "victimname", sVictimName, sizeof(sVictimName));
-	int iClientIndex = getClientIndex(hEvent);
+	char victimname[16];
+	event.GetString("userid", victimname, sizeof(victimname));
 
-	if(IsModEnabled() && !IsClientBot(iClientIndex)){
-		if(IsClientSurvivor(iClientIndex)){
-			if(StrEqual(sVictimName, "Tank", false)){
-				int iTankBurnReward = GetConVarInt(PointRewards[SurvBurnTank]);
-				if(iTankBurnReward > 0)
-					if(!PlayerData[iClientIndex][bTankBurning]){
-						PlayerData[iClientIndex][bTankBurning] = true;
-						addPoints(iClientIndex, iTankBurnReward, "Burn Tank");
-					}
-			}
-			else if(StrEqual(sVictimName, "Witch", false)){
-				int iWitchBurnReward = GetConVarInt(PointRewards[SurvBurnWitch]);
-				if(iWitchBurnReward > 0){
-					if(!PlayerData[iClientIndex][bWitchBurning]){
-						PlayerData[iClientIndex][bWitchBurning] = true;
-						addPoints(iClientIndex, iWitchBurnReward, "Burn Witch");
-					}
-				}
-			}
+	if (IsValidClient(client, true)) return Plugin_Continue;
+	if (IsClientSurvivor(client)) {
+		if (StrEqual("Tank", victimname, false) && !g_aPlayerStorage[client][Player_BurnedTank]) {
+			RewardPoints(client, "burn_tank");
+			g_aPlayerStorage[client][Player_BurnedTank] = true;
+		}
+
+		if (StrEqual("Witch", victimname, false) && !g_aPlayerStorage[client][Player_BurnedWitch]) {
+			RewardPoints(client, "burn_witch");
+			g_aPlayerStorage[client][Player_BurnedWitch] = true;
 		}
 	}
-	*/
 
 	return Plugin_Continue;
 }
@@ -482,6 +482,19 @@ public Action AdmCmd_GivePoints(int client, int args) {
 	return Plugin_Handled;
 }
 
+public Action AdmCmd_ReloadConfig(int client, int args) {
+	g_hData = GetKeyValuesFromFile("buy.cfg", "data");
+	g_hConfig = GetKeyValuesFromFile("options.cfg", "config");
+
+	if (g_hData == null || g_hConfig == null) {
+		NyxMsgReply(client, "Failed to reload configs. See console for errors.");
+	} else {
+		NyxMsgReply(client, "Reload complete!");
+	}
+
+	return Plugin_Handled;
+}
+
 ///
 /// Console Commands
 ///
@@ -491,7 +504,7 @@ public Action ConCmd_Buy(int client, int args) {
 		if (!IsValidClient(client)) {
 			NyxMsgReply(client, "Cannot display buy menu to console");
 		} else if (GetClientPoints(client) <= 0) {
-			CPrintToChat(client, "[%s] %t", NYX_PLUGIN_NAME, "Insufficient Points");
+			CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Insufficient Points");
 		} else {
 			Display_MainMenu(client);
 		}
@@ -503,25 +516,7 @@ public Action ConCmd_Buy(int client, int args) {
 	GetCmdArg(1, item_name, sizeof(item_name));
 
 	if (IsValidClient(client) || true) {
-		any data[NyxData];
-		bool fount = GetItemData(item_name, data);
-
-		if (fount) {
-			NyxMsgDebug("group: %s, section: %s, name: %s, cost %i, shortcut: %s, command: %s, command_args: %s",
-								data[Data_Group],
-								data[Data_Section],
-								data[Data_Name],
-								data[Data_Cost],
-								data[Data_Shortcut],
-								data[Data_Command],
-								data[Data_CommandArgs]);
-			NyxMsgDebug("team_name: %s, mission_limit: %i, heal_multiplier: %i",
-								data[Data_TeamName],
-								data[Data_MissionLimit],
-								data[Data_HealMultiplier]);
-		} else {
-			NyxMsgReply(client, "Item '%s' not found.", item_name);
-		}
+		BuyItem(client, item_name);
 	}
 
 	return Plugin_Handled;
@@ -532,7 +527,7 @@ public Action ConCmd_GivePoints(int client, int args) {
 		if (!IsValidClient(client)) {
 			NyxMsgReply(client, "Cannot display buy menu to console");
 		} else if (GetClientPoints(client) <= 5) {
-			CPrintToChat(client, "[%s] %t", NYX_PLUGIN_NAME, "Insufficient Points");
+			CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Insufficient Points");
 		} else {
 			Display_GivePointsMenu(client);
 		}
@@ -544,19 +539,19 @@ public Action ConCmd_GivePoints(int client, int args) {
 	int amount = GetCmdIntEx(2, 1, 120, 5);
 
 	if (GetClientPoints(client) < amount) {
-		CPrintToChat(client, "[%s] %t", NYX_PLUGIN_NAME, "Insufficient Points");
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Insufficient Points");
 	} else if (client == target) {
-		CPrintToChat(client, "[%s] %t", NYX_PLUGIN_NAME, "Sent Self Points");
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Sent Self Points");
 	} else if (GetClientTeam(client) != GetClientTeam(target)) {
-		CPrintToChat(client, "[%s] %t", NYX_PLUGIN_NAME, "Sent Wrong Team Points");
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Sent Wrong Team Points");
 	} else {
 		int spent = GiveClientPoints(target, amount);
 		SubClientPoints(client, spent);
-		CPrintToChatTeam(client, "[%s] %t", NYX_PLUGIN_NAME, "Sent Points", client, spent, target);
-		CPrintToChat(client, "[%s] %t", NYX_PLUGIN_NAME, "My Points", GetClientPoints(client));
+		CPrintToChatTeam(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Sent Points", client, spent, target);
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "My Points", GetClientPoints(client));
 
 		if (spent == 0) {
-			CPrintToChat(client, "[%s] %t", NYX_PLUGIN_NAME, "Sent Zero Points");
+			CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Sent Zero Points");
 		}
 	}
 
@@ -697,7 +692,12 @@ void Display_SubMenu(int client, const char[] info) {
 
 void Display_ConfirmMenu(int client, const char[] info) {
 	Menu menu = new Menu(MenuHandler_ConfirmMenu);
-	menu.SetTitle("Confirm");
+	
+	char title[32];
+	any data[NyxData]; GetItemData(info, data);
+	Format(title, sizeof(title), "Cost: %i", data[Data_Cost]);
+	menu.SetTitle(title);
+
 	menu.AddItem(info, "Yes");
 	menu.AddItem("no", "No");
 	menu.ExitBackButton = true;
@@ -773,13 +773,8 @@ public int MenuHandler_ConfirmMenu(Menu menu, MenuAction action, int param1, int
 		char info[32];
 		menu.GetItem(param2, info, sizeof(info));
 
-		if (IsValidClient(param1)) {
-			any data[NyxData];
-			GetItemData(info, data);
-
-			char command_args[256];
-			Format(command_args, sizeof(command_args), "%s %s", data[Data_Section], data[Data_CommandArgs]);
-			FakeClientCommandCheat(param1, data[Data_Command], command_args);
+		if (IsValidClient(param1) && !StrEqual(info, "no", false)) {
+			BuyItem(param1, info);
 		}
 	}
 
@@ -803,7 +798,7 @@ public int MenuHandler_GivePoints(Menu menu, MenuAction action, int param1, int 
 		int userid = StringToInt(info);
 
 		if (GetClientOfUserId(userid) == 0) {
-			CPrintToChat(param1, "[%s] %t", NYX_PLUGIN_NAME, "Player no longer available");
+			CPrintToChat(param1, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Player no longer available");
 		} else {
 			g_iMenuTarget[param1] = userid;
 			Display_GiveAmountMenu(param1);
@@ -836,19 +831,19 @@ public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int 
 
 		int target;
 		if ((target = GetClientOfUserId(g_iMenuTarget[param1])) == 0) {
-			CPrintToChat(param1, "[%s] %t", NYX_PLUGIN_NAME, "Player no longer available");
+			CPrintToChat(param1, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Player no longer available");
 		} else {
 			if (GetClientPoints(param1) < amount) {
-				CPrintToChat(param1, "[%s] %t", NYX_PLUGIN_NAME, "Insufficient Points", amount);
+				CPrintToChat(param1, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Insufficient Points", amount);
 			} else {
 				int spent = GiveClientPoints(target, amount);
 
 				SubClientPoints(param1, spent);
-				CPrintToChatTeam(param1, "[%s] %t", NYX_PLUGIN_NAME, "Sent Points", param1, spent, target);
-				CPrintToChat(param1, "[%s] %t", NYX_PLUGIN_NAME, "My Points", GetClientPoints(param1));
+				CPrintToChatTeam(param1, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Sent Points", param1, spent, target);
+				CPrintToChat(param1, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "My Points", GetClientPoints(param1));
 
 				if (spent == 0) {
-					CPrintToChat(param1, "[%s] %t", NYX_PLUGIN_NAME, "Sent Zero Points");
+					CPrintToChat(param1, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Sent Zero Points");
 				}
 			}
 		}
@@ -887,12 +882,6 @@ stock int AddTeamToMenu(Menu menu, int client) {
 ///
 /// Functions
 ///
-
-void InitVariables() {
-	for (int i = 1; i <= MaxClients; i++) {
-		g_aPlayerStorage[i][Player_Points] = nyx_ps_start_points.IntValue;
-	}
-}
 
 KeyValues GetKeyValuesFromFile(const char[] file, const char[] section, bool fail_state = true) {
 	char path[PLATFORM_MAX_PATH];
@@ -938,14 +927,14 @@ bool RewardPoints(int client, const char[] key, const char[] type="reward") {
 
 		int spent = GiveClientPoints(client, reward);
 		if (spent == 0) {
-			CPrintToChat(client, "[%s] %t", NYX_PLUGIN_NAME, "Max Points",
-					GetClientPoints(client), nyx_ps_max_points.IntValue);
+			CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Max Points",
+					GetClientPoints(client), g_iGameSettings[Game_MaxPoints]);
 
 			return false;
 		}
 
 		char phrase[128]; g_hConfig.GetString("phrase", phrase, sizeof(phrase), "Reward");
-		CPrintToChat(client, "[%s] %t", NYX_PLUGIN_NAME, phrase, spent);
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, phrase, spent);
 	} else {
 		NyxMsgDebug("reward key '%s' not found", key);
 		return false;
@@ -963,7 +952,41 @@ void RewardTeamPoints(int team, const char[] key, const char[] type="reward") {
 	}
 }
 
-bool GetRewardKeyValue(const char[] reward, const char[] key, char[] buffer, int maxlength) {
+int GetConfigKeyInt(const char[] key, int def=-1) {
+	char buffer[256];
+	bool exists = GetConfigKeyString(key, buffer, sizeof(buffer));
+
+	if (exists) {
+		return StringToInt(buffer);
+	}
+
+	return def;
+}
+
+bool GetConfigKeyString(const char[] key, char[] buffer, int maxlength) {
+	g_hConfig.Rewind();
+
+	if (g_hConfig.JumpToKey(key)) {
+		g_hConfig.GetString(NULL_STRING, buffer, maxlength);
+
+		return true;
+	}
+
+	return false;
+}
+
+int GetRewardKeyInt(const char[] reward, const char[] key, int def=-1) {
+	char buffer[256];
+	bool exists = GetRewardKeyString(reward, key, buffer, sizeof(buffer));
+
+	if (exists) {
+		return StringToInt(buffer);
+	}
+
+	return def;
+}
+
+bool GetRewardKeyString(const char[] reward, const char[] key, char[] buffer, int maxlength) {
 	g_hConfig.Rewind();
 
 	if (!g_hConfig.JumpToKey("rewards")) {
@@ -999,12 +1022,12 @@ void SubClientPoints(int client, int points) {
 int GiveClientPoints(int client, int points) {
 	int total = GetClientPoints(client) + points;
 
-	if (total > nyx_ps_max_points.IntValue) {
-		int min = MathMin(points, total - nyx_ps_max_points.IntValue);
-		int max = MathMax(points, total - nyx_ps_max_points.IntValue);
+	if (total > g_iGameSettings[Game_MaxPoints]) {
+		int min = MathMin(points, total - g_iGameSettings[Game_MaxPoints]);
+		int max = MathMax(points, total - g_iGameSettings[Game_MaxPoints]);
 		int spent = max - min;
 
-		if (spent >= nyx_ps_max_points.IntValue) {
+		if (spent >= g_iGameSettings[Game_MaxPoints]) {
 			return 0;
 		}
 
@@ -1014,6 +1037,63 @@ int GiveClientPoints(int client, int points) {
 
 	AddClientPoints(client, points);
 	return points;
+}
+
+bool BuyItem(int client, const char[] item_name) {
+	any data[NyxData];
+	bool exists = GetItemData(item_name, data);
+
+/* Uncomment for debugging
+	NyxMsgDebug("Group: %s, Section: %s, Name: %s, Cost %i",
+						data[Data_Group],
+						data[Data_Section],
+						data[Data_Name],
+						data[Data_Cost];
+	NyxMsgDebug("Shortcut: %s, Command: %s, CommandArgs: %s",
+						data[Data_Shortcut],
+						data[Data_Command],
+						data[Data_CommandArgs]);
+	NyxMsgDebug("TeamName: %s, MissionLimit: %i, HealMultiplier: %i",
+						data[Data_TeamName],
+						data[Data_MissionLimit],
+						data[Data_HealMultiplier]);
+	NyxMsgDebug("MustBeAlive: %d, MustBeIncapacitated: %d, MustBeGrabbed]: %d",
+						data[MustBeAlive]
+						data[Data_MustBeIncapacitated],
+						data[Data_MustBeGrabbed];
+*/
+
+	if (!exists) {
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Item Doesn't Exist", item_name);
+		return false;
+	} else if (GetClientPoints(client) < data[Data_Cost]) {
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Insufficient Points");
+		return false;
+	} else if (GetClientTeam(client) != L4D2_StringToTeam(data[Data_TeamName]) &&
+			!StrEqual(data[Data_TeamName], "both", false))
+	{
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Item Wrong Team");
+		return false;
+	} else if (!IsPlayerAlive(client) && data[Data_MustBeAlive]) {
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Must Be Alive");
+		return false;
+	} else if (IsPlayerAlive(client) && !data[Data_MustBeAlive]) {
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Must Be Dead");
+		return false;
+	} else if (IsClientIncapacitated(client) && !data[Data_MustBeIncapacitated]) {
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Must Be Incapacitated");
+		return false;
+	} else if (IsClientGrabbed(client) && !data[Data_MustBeGrabbed]) {
+		CPrintToChat(client, "\x04[%s]\x01 %t", NYX_PLUGIN_NAME, "Must Be Grabbed");
+		return false;
+	} else {
+		char command_args[256];
+		Format(command_args, sizeof(command_args), "%s %s", data[Data_Section], data[Data_CommandArgs]);
+		FakeClientCommandCheat(client, data[Data_Command], command_args);
+		SubClientPoints(client, data[Data_Cost]);
+	}
+
+	return true;
 }
 
 bool GetItemData(const char[] item_name, any[NyxData] data) {
@@ -1028,6 +1108,7 @@ bool GetItemData(const char[] item_name, any[NyxData] data) {
 		g_hData.GetString("command", data[Data_Command], sizeof(data[Data_Command]), "give");
 		g_hData.GetString("command_args", data[Data_CommandArgs], sizeof(data[Data_CommandArgs]));
 		g_hData.GetString("team_name", data[Data_TeamName], sizeof(data[Data_TeamName]), "both");
+		data[Data_MustBeAlive] = (g_hData.GetNum("must_be_alive", 1) == 1);
 
 		// check if the group we're in has sections
 		if (!g_hData.GotoFirstSubKey()) {
@@ -1055,6 +1136,9 @@ bool GetItemData(const char[] item_name, any[NyxData] data) {
 				data[Data_MissionLimit] = g_hData.GetNum("mission_limit", -1);
 				data[Data_HealMultiplier] = g_hData.GetNum("heal_multiplier", -1);
 				data[Data_Cost] = g_hData.GetNum("cost", -1);
+				data[Data_MustBeAlive] = (g_hData.GetNum("must_be_alive", data[Data_MustBeAlive]) == 1);
+				data[Data_MustBeIncapacitated] = (g_hData.GetNum("must_be_incapacitated", data[Data_MustBeAlive]) == 1);
+				data[Data_MustBeGrabbed] = (g_hData.GetNum("must_be_grabbed", data[Data_MustBeGrabbed]) == 1);
 
 				return true;
 			}

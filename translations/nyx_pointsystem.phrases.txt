@@ -5,42 +5,60 @@
 		"#format"   "{1:i}"
 		"en"        "{olive}+{1}{default} points rewarded."
 	}
-
 	"Sent Points"
 	{
 		"#format"   "{1:N},{2:i},{3:N}"
 		"en"        "{lightgreen}{1}{default} sent {olive}{2}{default} points to {lightgreen}{3}{default}."
 	}
-
 	"Sent Self Points"
 	{
-		"en"        "{blue}You can't send points to yourself!"
+		"en"        "{red}You can't send points to yourself!"
 	}
-
 	"Sent Wrong Team Points"
 	{
 		"en"        "{red}You can't give points so someone on the other team!"
 	}
-
 	"Sent Zero Points"
 	{
-		"en"        "{blue}You sent zero points."
+		"en"        "{red}You sent zero points."
 	}
-
 	"Insufficient Points"
 	{
-		"en"        "{blue}You don't have enough points."
+		"en"        "{red}You don't have enough points."
 	}
-
   "My Points"
 	{
 		"#format"   "{1:i}"
-		"en"        "{blue}You have {olive}{1}{blue} points left."
+		"en"        "You have {olive}{1}{default} points left."
 	}
-	
 	"Max Points"
 	{
 		"#format"   "{1:i},{2:i}"
-		"en"        "You have received the maximum number of points [{1}/{2}]"
+		"en"        "You have received the maximum number of points [{red}{1}{default}/{olive}{2}{default}]"
+	}
+	"Item Doesn't Exist"
+	{
+		"#format"   "{1:s}"
+		"en"        "The item '{olive}{1}{default}' could not be found!"
+	}
+	"Must Be Alive"
+	{
+		"en"        "{red}You must be alive to do this."
+	}
+	"Must Be Dead"
+	{
+		"en"        "{red}You must be dead to do this."
+	}
+	"Must Be Incapacitated"
+	{
+		"en"        "{red}You must be incapacitated to do this."
+	}
+	"Must Be Grabbed"
+	{
+		"en"        "{red}You must be grabbed to do this."
+	}
+	"Item Wrong Team"
+	{
+		"en"        "{red}You can only buy this item when on the other team!"
 	}
 }
