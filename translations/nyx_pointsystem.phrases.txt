@@ -1,5 +1,11 @@
 "Phrases"
 {
+	"Reward"
+	{
+		"#format"   "{1:i}"
+		"en"        "{olive}+{1}{default} points rewarded."
+	}
+
 	"Sent Points"
 	{
 		"#format"   "{1:N},{2:i},{3:N}"
