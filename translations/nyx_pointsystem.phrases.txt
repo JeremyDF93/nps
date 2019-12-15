@@ -12,19 +12,19 @@
 	}
 	"Sent Self Points"
 	{
-		"en"        "{red}You can't send points to yourself!"
+		"en"        "You can't send points to yourself!"
 	}
 	"Sent Wrong Team Points"
 	{
-		"en"        "{red}You can't give points so someone on the other team!"
+		"en"        "You can't give points so someone on the other team!"
 	}
 	"Sent Zero Points"
 	{
-		"en"        "{red}You sent zero points."
+		"en"        "You sent zero points."
 	}
 	"Insufficient Points"
 	{
-		"en"        "{red}You don't have enough points."
+		"en"        "You don't have enough points."
 	}
   "Points Left"
 	{
@@ -43,19 +43,19 @@
 	}
 	"Must Be Alive"
 	{
-		"en"        "{red}You must be alive to do this."
+		"en"        "You must be alive to do this."
 	}
 	"Must Be Dead"
 	{
-		"en"        "{red}You must be dead to do this."
+		"en"        "You must be dead to do this."
 	}
 	"Must Be Incapacitated"
 	{
-		"en"        "{red}You must be incapacitated to do this."
+		"en"        "You must be incapacitated to do this."
 	}
 	"Item Wrong Team"
 	{
-		"en"        "{red}You can only buy this item when on the other team!"
+		"en"        "You can only buy this item when on the other team!"
 	}
 	"Show Points"
 	{
@@ -182,5 +182,43 @@
 	{
 		"#format"   "{1:i},{2:N}"
 		"en"        "{olive}+{1}{default} points awarded for reviving {lightgreen}{2}{default} from the dead."
+	}
+	"Burned Tank"
+	{
+		"#format"   "{1:i}"
+		"en"        "{olive}+{1}{default} points awarded for burning the {lightgreen}Tank{default}"
+	}
+	"Burned Witch"
+	{
+		"#format"   "{1:i}"
+		"en"        "{olive}+{1}{default} points awarded for burning the {lightgreen}Witch{default}"
+	}
+	"Round Won"
+	{
+		"#format"   "{1:i}"
+		"en"        "{olive}+{1}{default} points awarded for winning."
+	}
+	"Round Lost"
+	{
+		"#format"   "{1:i}"
+		"en"        "{olive}+{1}{default} points awarded for loosing."
+	}
+	"Spawn Limit Reached"
+	{
+		"#format"   "{1:s}"
+		"en"        "Spawn limit reached for {olive}{1}{default}."
+	}
+	"Heal Limit Reached"
+	{
+		"en"        "You have reached the heal limit."
+	}
+	"Heal Limit"
+	{
+		"#format"   "{1:i},{2:i}"
+		"en"        "You have healed [{red}{1}{default}/{olive}{2}{default}] times."
+	}
+	"Bought Nothing"
+	{
+		"en"        "You haven't bought anything yet."
 	}
 }

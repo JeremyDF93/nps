@@ -69,6 +69,28 @@
 #define L4D2_TEAM_SURVIVOR    2
 #define L4D2_TEAM_INFECTED    3
 
+// Smoker = 1, Boomer = 2, Hunter = 3, Spitter = 4, Jockey = 5, 
+// Charger = 6, Witch = 7, Tank = 8, Survivor = 9
+enum L4D2ClassType {
+	L4D2Class_Unknown,
+	L4D2Class_Smoker,
+	L4D2Class_Boomer,
+	L4D2Class_Hunter,
+	L4D2Class_Spitter,
+	L4D2Class_Jockey,
+	L4D2Class_Charger,
+	L4D2Class_Witch,
+	L4D2Class_Tank,
+	L4D2Class_Survivor
+};
+
+enum L4D2Team {
+	L4D2Team_Unassigned = 0,
+	L4D2Team_Spectator = 1,
+	L4D2Team_Survivor = 2,
+	L4D2Team_Infected = 3
+}
+
 stock bool IsValidClient(int client, bool filterBots = false, bool filterReplay = true, bool filterSourceTV = true) {
 	if (client <= 0 || client > MaxClients) return false;
 	if (!IsClientInGame(client)) return false;
@@ -197,7 +219,7 @@ stock int GetCmdInt(int argnum, int def = 0) {
 	return RoundFloat(GetCmdFloat(argnum, float(def)));
 }
 
-stock int GetCmdIntEx(int argnum, int min = INT_MAX, int max = INT_MIN, int def = 0) {
+stock int GetCmdIntEx(int argnum, int min = INT_MIN, int max = INT_MAX, int def = 0) {
 	return RoundFloat(GetCmdFloatEx(argnum, float(min), float(max), float(def)));
 }
 
@@ -439,11 +461,33 @@ stock void TF2_ClassToString(TFClassType class, char[] str, int maxlength) {
 /// L4D2 Stocks
 ///
 
+stock L4D2ClassType L4D2_GetClassType(const char[] classname) {
+	if (strcmp(classname, "boomer", false) == 0) return L4D2Class_Boomer;
+	if (strcmp(classname, "smoker", false) == 0) return L4D2Class_Smoker;
+	if (strcmp(classname, "hunter", false) == 0) return L4D2Class_Hunter;
+	if (strcmp(classname, "spitter", false) == 0) return L4D2Class_Spitter;
+	if (strcmp(classname, "jockey", false) == 0) return L4D2Class_Jockey;
+	if (strcmp(classname, "charger", false) == 0) return L4D2Class_Charger;
+	if (strcmp(classname, "witch", false) == 0) return L4D2Class_Witch;
+	if (strcmp(classname, "tank", false) == 0) return L4D2Class_Tank;
+	if (strcmp(classname, "survivor", false) == 0) return L4D2Class_Survivor;
+
+	return L4D2Class_Unknown;
+}
+
+stock L4D2ClassType L4D2_GetClientClass(int client) {
+	return view_as<L4D2ClassType>(GetEntProp(client, Prop_Send, "m_zombieClass"));
+}
+
+stock L4D2Team L4D2_GetClientTeam(int client) {
+	return view_as<L4D2Team>(GetClientTeam(client));
+}
+
 stock int L4D2_StringToTeam(char[] str) {
-	if (strcmp(str, "unassigned", false) == 0) return 0;
-	if (strcmp(str, "spectate", false) == 0) return 1;
-	if (strcmp(str, "survivor", false) == 0) return 2;
-	if (strcmp(str, "infected", false) == 0) return 3;
+	if (strcmp(str, "unassigned", false) == 0) return L4D2_TEAM_UNASSIGNED;
+	if (strcmp(str, "spectate", false) == 0) return L4D2_TEAM_SPECTATOR;
+	if (strcmp(str, "survivor", false) == 0) return L4D2_TEAM_SURVIVOR;
+	if (strcmp(str, "infected", false) == 0) return L4D2_TEAM_INFECTED;
 
 	return -1;
 }
