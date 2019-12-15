@@ -221,4 +221,27 @@
 	{
 		"en"        "You haven't bought anything yet."
 	}
+	"Health is Full"
+	{
+		"en"        "You already have full health."
+	}
+	"Tank Allowed in Minutes"
+	{
+		"#format"   "{1:i}"
+		"en"        "You must wait {olive}{1}{default} minutes before you can become the tank."
+	}
+	"Tank Allowed in Seconds"
+	{
+		"#format"   "{1:i}"
+		"en"        "You must wait {olive}{1}{default} seconds before you can become the tank."
+	}
+	"Tank Not Allowed in Final"
+	{
+		"en"        "Tank is not allowed in final."
+	}
+	"Announce Special Infected Purchase"
+	{
+		"#format"   "{1:N},{2:s}"
+		"en"        "{lightgreen}{1}{default} purchased a {lightgreen}{2}{default}"
+	}
 }

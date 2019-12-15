@@ -40,7 +40,8 @@ enum NyxBuy {
 	bool:Buy_MustBeAlive,
 	bool:Buy_MustBeIncapacitated,
 	bool:Buy_MustBeGrabbed,
-	Buy_SpawnLimit
+	Buy_SpawnLimit,
+	bool:Buy_Announce
 }
 
 enum NyxPlayer {
@@ -68,7 +69,9 @@ enum NyxConVar {
 	ConVar:ConVar_StartPoints,
 	ConVar:ConVar_KillStreak,
 	ConVar:ConVar_HeadshotStreak,
-	ConVar:ConVar_TankHealLimit
+	ConVar:ConVar_TankHealLimit,
+	ConVar:ConVar_TankDelay,
+	ConVar:ConVar_TankAllowedFinal
 }
 
 /***
@@ -97,6 +100,9 @@ KeyValues g_hRewards;
 int g_iMenuTarget[MAXPLAYERS + 1];
 any g_aPlayerStorage[MAXPLAYERS + 1][NyxPlayer];
 int g_iSpawnCount[L4D2ClassType];
+
+bool g_bFinal;
+bool g_bTankAllowed;
 
 /***
  *        ____  __            _          ____      __            ____              
@@ -129,6 +135,8 @@ public void OnPluginStart() {
 	g_hConVars[ConVar_KillStreak] = CreateConVar("nyx_ps_killstreak", "25", "Number of infected required to kill in order to get a killstreak.");
 	g_hConVars[ConVar_HeadshotStreak] = CreateConVar("nyx_ps_headshot_streak", "20", "Number of infected headshots required in order to get a headshot killstreak.");
 	g_hConVars[ConVar_TankHealLimit] = CreateConVar("nyx_ps_tank_heal_limit", "3", "Maximum number of times the tank can heal in a life.");
+	g_hConVars[ConVar_TankDelay] = CreateConVar("nyx_ps_tank_delay", "90", "Time to delay tank spawning after survivors leave the safe area.");
+	g_hConVars[ConVar_TankAllowedFinal] = CreateConVar("nyx_ps_tank_allowed_final", "0", "Tank allowed in final?");
 
 	// Register events
 	HookEvent("player_spawn", Event_PlayerSpawn);
@@ -153,6 +161,7 @@ public void OnPluginStart() {
 	HookEvent("defibrillator_used", Event_DefibrillatorUsed);
 	HookEvent("zombie_ignited", Event_ZombieIgnited);
 
+	HookEvent("finale_start", Event_FinaleStart);
 	HookEvent("finale_win", Event_FinaleWin);
 	HookEvent("round_end", Event_RoundEnd);
 
@@ -165,6 +174,8 @@ public void OnMapStart() {
 	char map[PLATFORM_MAX_PATH];
 	GetCurrentMap(map, sizeof(map));
 	if (StrContains(map, "m1_") != -1) {
+		NyxMsgDebug("OnMapStart Triggered a Reset");
+
 		for (int i = 1; i <= MaxClients; i++) {
 			SetPlayerDefaults(i);
 		}
@@ -173,25 +184,30 @@ public void OnMapStart() {
 			g_iSpawnCount[i] = 0;
 		}
 	}
+
+	g_bFinal = false;
+	g_bTankAllowed = false;
 }
 
 public void OnClientAuthorized(int client) {
-	SetPlayerDefaults(client);
+	if (IsValidClient(client)) return;
+
+	SetPlayerDefaults(client, false);
 }
 
 public void OnClientPostAdminCheck(int client) {
-	/*
-	Cookie cookie = new Cookie("points", "Player Points", CookieAccess_Protected);
+	if (IsValidClient(client)) return;
+
+	Handle cookie = RegClientCookie("points", "Player Points", CookieAccess_Protected);
 
 	char buffer[16];
-	cookie.Get(client, buffer, sizeof(buffer));
+	GetClientCookie(client, cookie, buffer, sizeof(buffer));
 
 	int result;
 	if (StringToIntEx(buffer, result) == 0) {
 		result = g_hConVars[ConVar_StartPoints].IntValue;
 	}
 	g_aPlayerStorage[client][Player_Points] = result;
-	*/
 }
 
 /***
@@ -204,7 +220,7 @@ public void OnClientPostAdminCheck(int client) {
  */
 
 public Action L4D_OnFirstSurvivorLeftSafeArea(int client) {
-	//CreateTimer(g_iGameSettings[Settings_TankWaitTime], Timer_TankAllowed);
+	CreateTimer(g_hConVars[ConVar_TankDelay].FloatValue, Timer_TankAllowed);
 
 	return Plugin_Continue;
 }
@@ -238,6 +254,8 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	//bool headshot = event.GetBool("headshot");
 
+	
+
 	if (!IsValidClient(attacker, true)) return Plugin_Continue;
 	if (IsPlayerSurvivor(attacker)) {
 		if (!IsPlayerInfected(victim)) return Plugin_Continue;
@@ -259,8 +277,6 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 			HandleError(attacker, error);
 		}
 	}
-
-	g_aPlayerStorage[victim][Player_HealCount] = 0;
 
 	return Plugin_Continue;
 }
@@ -390,10 +406,31 @@ public Action Event_InfectedDeath(Event event, const char[] name, bool dontBroad
 	return Plugin_Continue;
 }
 
+/*
+public Action Event_InfectedHurt(Event event, const char[] name, bool dontBroadcast) {
+	int victim = GetClientOfUserId(event.GetInt("entityid"));
+	int attacker = GetClientOfUserId(event.GetInt("attacker"));
+
+	if (!IsValidClient(victim, true)) return Plugin_Continue;
+	if (IsPlayerInfected(victim) && IsPlayerTank(victim)) {
+		int health = GetEntProp(victim, Prop_Data, "m_iHealth");
+		int max_health = GetEntProp(victim, Prop_Data, "m_iMaxHealth");
+		int percent = RoundFloat((health / max_health) * 100.0);
+
+		NyxMsgDebug("Tank has %i%% health left.", percent);
+	}
+
+	return Plugin_Continue;
+}
+*/
+
 public Action Event_TankKilled(Event event, const char[] name, bool dontBroadcast) {
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	bool solo = event.GetBool("solo");
+
+	g_aPlayerStorage[attacker][Player_BurnedWitch] = false;
+	g_aPlayerStorage[victim][Player_HealCount] = 0;
 
 	if (!IsValidClient(attacker, true)) return Plugin_Continue;
 	if (IsPlayerSurvivor(attacker)) {
@@ -414,9 +451,6 @@ public Action Event_TankKilled(Event event, const char[] name, bool dontBroadcas
 		}
 	}
 
-	g_aPlayerStorage[attacker][Player_BurnedWitch] = false;
-	g_aPlayerStorage[victim][Player_HealCount] = 0;
-
 	return Plugin_Continue;
 }
 
@@ -424,6 +458,9 @@ public Action Event_WitchKilled(Event event, const char[] name, bool dontBroadca
 	int attacker = GetClientOfUserId(event.GetInt("userid"));
 	int victim = GetClientOfUserId(event.GetInt("witchid"));
 	bool oneshot = event.GetBool("oneshot");
+
+	g_aPlayerStorage[attacker][Player_BurnedWitch] = false;
+	g_aPlayerStorage[victim][Player_HealCount] = 0;
 
 	if (!IsValidClient(attacker, true)) return Plugin_Continue;
 	if (IsPlayerSurvivor(attacker)) {
@@ -443,9 +480,6 @@ public Action Event_WitchKilled(Event event, const char[] name, bool dontBroadca
 			HandleError(attacker, error);
 		}
 	}
-
-	g_aPlayerStorage[attacker][Player_BurnedWitch] = false;
-	g_aPlayerStorage[victim][Player_HealCount] = 0;
 
 	return Plugin_Continue;
 }
@@ -667,8 +701,18 @@ public Action Event_ZombieIgnited(Event event, const char[] name, bool dontBroad
 	return Plugin_Continue;
 }
 
+public Action Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
+	g_bFinal = true;
+	g_bTankAllowed = g_hConVars[ConVar_TankAllowedFinal].BoolValue;
+
+	NyxMsgDebug("Event_FinaleStart");
+
+	return Plugin_Continue;
+}
+
 public Action Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
-	// TODO: Event_FinaleWin
+	g_bFinal = false;
+
 	NyxMsgDebug("Event_FinaleWin");
 
 	return Plugin_Continue;
@@ -676,7 +720,7 @@ public Action Event_FinaleWin(Event event, const char[] name, bool dontBroadcast
 
 public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
 	int winner = event.GetInt("winner");
-
+	
 	for (int i = 1; i <= MaxClients; i++) {
 		if (!IsValidClient(i, true)) continue;
 		if (GetClientTeam(i) != winner) continue;
@@ -701,6 +745,8 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 		}
 	}
 
+	g_bFinal = false;
+
 	return Plugin_Continue;
 }
 
@@ -714,7 +760,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
  */
 
 public Action Timer_TankAllowed(Handle timer) {
-	//g_iGameSettings[Settings_TankAllowed] = true;
+	g_bTankAllowed = true;
 }
 
 /***
@@ -758,7 +804,7 @@ public Action AdmCmd_SetPoints(int client, int args) {
 
 public Action AdmCmd_ReloadConfig(int client, int args) {
 	g_hData = GetKeyValuesFromFile("buy.cfg", "data");
-	g_hRewards = GetKeyValuesFromFile("rewards.cfg", "config");
+	g_hRewards = GetKeyValuesFromFile("rewards.cfg", "data");
 
 	if (g_hData == null || g_hRewards == null) {
 		NyxMsgReply(client, "Failed to reload configs. See console for errors.");
@@ -1318,10 +1364,39 @@ bool BuyItem(int client, const char[] item_name) {
 				NyxPrintToChat(client, "%t", "Heal Limit Reached");
 				return false;
 			}
+			if (GetEntProp(client, Prop_Data, "m_iHealth") > GetEntProp(client, Prop_Data, "m_iMaxHealth")) {
+				NyxPrintToChat(client, "%t", "Must Be Alive");
+				return false;
+			}
 
 			g_aPlayerStorage[client][Player_HealCount]++;
 			NyxPrintToChat(client, "%t", "Heal Limit", g_aPlayerStorage[client][Player_HealCount],
 				g_hConVars[ConVar_TankHealLimit].IntValue);
+		}
+
+		if (GetEntProp(client, Prop_Data, "m_iHealth") == GetEntProp(client, Prop_Data, "m_iMaxHealth")) {
+			NyxPrintToChat(client, "%t", "Health is Full");
+			return false;
+		}
+	}
+	if (StrEqual(data[Buy_Section], "tank", false)) {
+		if (!g_bTankAllowed) {
+			if (g_bFinal && g_hConVars[ConVar_TankAllowedFinal].BoolValue) {
+				NyxPrintToChat(client, "%t", "Tank Not Allowed in Final");
+				return false;
+			}
+
+			int time = g_hConVars[ConVar_TankDelay].IntValue;
+			int minutes = time / 60;
+			int seconds = time % 60;
+
+			if (minutes) {
+				NyxPrintToChat(client, "%t", "Tank Allowed in Minutes", minutes);
+			} else {
+				NyxPrintToChat(client, "%t", "Tank Allowed in Seconds", seconds);
+			}
+
+			return false;
 		}
 	}
 
@@ -1331,6 +1406,9 @@ bool BuyItem(int client, const char[] item_name) {
 	SubClientPoints(client, data[Buy_Cost]);
 
 	strcopy(g_aPlayerStorage[client][Player_LastItem], 64, data[Buy_Section]);
+	if (data[Buy_Announce]) {
+		NyxPrintToAll(client, "%t", "Announce Special Infected Purchase", client, data[Buy_Name]);
+	}
 
 	return true;
 }
@@ -1377,6 +1455,7 @@ bool GetItemData(const char[] item_name, any[NyxBuy] data) {
 				data[Buy_MustBeIncapacitated] = (g_hData.GetNum("must_be_incapacitated", 0) == 1);
 				data[Buy_MustBeGrabbed] = (g_hData.GetNum("must_be_grabbed", 0) == 1);
 				data[Buy_SpawnLimit] = g_hData.GetNum("spawn_limit", -1);
+				data[Buy_Announce] = (g_hData.GetNum("announce", 0) == 1);
 
 				return true;
 			}
@@ -1438,8 +1517,11 @@ KeyValues GetKeyValuesFromFile(const char[] file, const char[] section, bool fai
  *                                                 
  */
 
-void SetPlayerDefaults(int client) {
-	g_aPlayerStorage[client][Player_Points] = g_hConVars[ConVar_StartPoints].IntValue;
+void SetPlayerDefaults(int client, bool points=true) {
+	if (points) {
+		SetClientPoints(client, g_hConVars[ConVar_StartPoints].IntValue);
+	}
+
 	g_aPlayerStorage[client][Player_Reward] = 0;
 	g_aPlayerStorage[client][Player_Headshots] = 0;
 	g_aPlayerStorage[client][Player_Kills] = 0;
@@ -1460,14 +1542,20 @@ int GetClientPoints(int client) {
 
 void SetClientPoints(int client, int points) {
 	g_aPlayerStorage[client][Player_Points] = points;
+
+	Handle cookie = RegClientCookie("points", "Player Points", CookieAccess_Protected);
+
+	char buffer[16];
+	IntToString(points, buffer, sizeof(buffer));
+	SetClientCookie(client, cookie, buffer);
 }
 
 void AddClientPoints(int client, int points) {
-	g_aPlayerStorage[client][Player_Points] += points;
+	SetClientPoints(client, GetClientPoints(client) + points);
 }
 
 void SubClientPoints(int client, int points) {
-	g_aPlayerStorage[client][Player_Points] -= points;
+	SetClientPoints(client, GetClientPoints(client) - points);
 }
 
 int GiveClientPoints(int client, int points) {
@@ -1543,6 +1631,17 @@ bool IsSpitterDamage(int type){
 	if (type == 263168 || type == 265216) return true;
 
 	return false;
+}
+
+stock void NyxPrintToAll(int team, char[] format, any ...) {
+	char buffer[256];
+	VFormat(buffer, sizeof(buffer), format, 3);
+
+	for (int i = 1; i <= MaxClients; i++) {
+		if (!IsValidClient(i, true)) continue;
+
+		NyxPrintToChat(i, buffer);
+	}
 }
 
 stock void NyxPrintToTeam(int team, char[] format, any ...) {
