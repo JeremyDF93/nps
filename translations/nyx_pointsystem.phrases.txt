@@ -53,6 +53,10 @@
 	{
 		"en"        "You must be incapacitated to do this."
 	}
+	"Must Not Be Grabbed"
+	{
+		"en"        "You can not do this while grabbed."
+	}
 	"Item Wrong Team"
 	{
 		"en"        "You can only buy this item when on the other team!"
@@ -212,7 +216,7 @@
 	{
 		"en"        "You have reached the heal limit."
 	}
-	"Heal Limit"
+	"Tank Heal Limit"
 	{
 		"#format"   "{1:i},{2:i}"
 		"en"        "You have healed [{red}{1}{default}/{olive}{2}{default}] times."
