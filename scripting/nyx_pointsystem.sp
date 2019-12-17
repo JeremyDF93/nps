@@ -170,7 +170,6 @@ public void OnPluginStart() {
 
 	HookEvent("finale_start", Event_FinaleStart);
 	HookEvent("finale_win", Event_FinaleWin);
-	HookEvent("round_end", Event_RoundEnd);
 
 	// KeyValues
 	g_hData = GetKeyValuesFromFile("buy.cfg", "data");
@@ -207,7 +206,7 @@ public void OnClientAuthorized(int client) {
 }
 
 public void OnClientPostAdminCheck(int client) {
-	if (IsValidClient(client)) return;
+	if (!IsValidClient(client)) return;
 
 	Handle cookie = RegClientCookie("points", "Player Points", CookieAccess_Protected);
 	
@@ -222,6 +221,16 @@ public void OnClientPostAdminCheck(int client) {
 		}
 		g_aPlayerStorage[client][Player_Points] = result;
 	}
+}
+
+public void OnClientDisconnect(int client) {
+	if (!IsValidClient(client)) return;
+
+	Handle cookie = RegClientCookie("points", "Player Points", CookieAccess_Protected);
+
+	char buffer[16];
+	IntToString(GetClientPoints(client), buffer, sizeof(buffer));
+	SetClientCookie(client, cookie, buffer);
 }
 
 public void OnGameFrame() {
@@ -255,6 +264,31 @@ public Action L4D_OnFirstSurvivorLeftSafeArea(int client) {
 
 public void L4D_OnReplaceTank(int tank, int newtank) {
 	g_aPlayerStorage[tank][Player_HealCount] = 0;
+}
+
+public Action L4D2_OnEndVersusModeRound(bool countSurvivors) {
+	int winner = countSurvivors ? L4D2_TEAM_SURVIVOR : L4D2_TEAM_INFECTED;
+
+	for (int i = 1; i <= MaxClients; i++) {
+		if (!IsValidClient(i, true)) continue;
+		if (GetClientTeam(i) == winner) {
+			NyxError error = RewardPoints(i, "round_won");
+			if (error) {
+				HandleError(i, error);
+			} else {
+				NyxPrintToChat(i, "%t", "Round Won", GetPlayerReward(i));
+			}
+		} else {
+			NyxError error = RewardPoints(i, "round_lost");
+			if (error) {
+				HandleError(i, error);
+			} else {
+				NyxPrintToChat(i, "%t", "Round Lost", GetPlayerReward(i));
+			}
+		}
+
+		NyxPrintToChat(i, "%t", "Round End Show Points", i, GetClientPoints(i));
+	}
 }
 
 /***
@@ -729,52 +763,6 @@ public Action Event_FinaleWin(Event event, const char[] name, bool dontBroadcast
 	g_bFinal = false;
 
 	NyxMsgDebug("Event_FinaleWin");
-
-	return Plugin_Continue;
-}
-
-public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
-	int winner = event.GetInt("winner"); // FUCKING USELESS
-	int reason = event.GetInt("reason");
-	char message[256];
-	event.GetString("message", message, sizeof(message));
-	NyxMsgDebug("winner(always zero in vs, why? *sad*): %i, reason: %i, message: %s", winner, reason, message);
-
-	g_bFinal = false;
-
-	if (reason == 5) {
-		for (int i = 1; i <= MaxClients; i++) {
-			if (!IsValidClient(i, true)) continue;
-
-			NyxPrintToTeam(GetClientTeam(i), "%t", "Round End Show Points", i, GetClientPoints(i));
-		}
-	}
-	
-	/*
-	for (int i = 1; i <= MaxClients; i++) {
-		if (!IsValidClient(i, true)) continue;
-		if (GetClientTeam(i) != winner) continue;
-
-		NyxError error = RewardPoints(i, "round_won");
-		if (error) {
-			HandleError(i, error);
-		} else {
-			NyxPrintToChat(i, "%t", "Round Won", GetPlayerReward(i));
-		}
-	}
-
-	for (int i = 1; i <= MaxClients; i++) {
-		if (!IsValidClient(i, true)) continue;
-		if (GetClientTeam(i) == winner) continue;
-
-		NyxError error = RewardPoints(i, "round_lost");
-		if (error) {
-			HandleError(i, error);
-		} else {
-			NyxPrintToChat(i, "%t", "Round Lost", GetPlayerReward(i));
-		}
-	}
-	*/
 
 	return Plugin_Continue;
 }

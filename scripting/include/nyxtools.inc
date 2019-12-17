@@ -72,7 +72,7 @@
 // Smoker = 1, Boomer = 2, Hunter = 3, Spitter = 4, Jockey = 5, 
 // Charger = 6, Witch = 7, Tank = 8, Survivor = 9
 enum L4D2ClassType {
-	L4D2Class_Unknown,
+	L4D2Class_Unknown = 0,
 	L4D2Class_Smoker,
 	L4D2Class_Boomer,
 	L4D2Class_Hunter,
