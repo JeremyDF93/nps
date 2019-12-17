@@ -26,6 +26,10 @@
 	{
 		"en"        "You don't have enough points."
 	}
+	"No Points"
+	{
+		"en"        "You don't have any points."
+	}
   "Points Left"
 	{
 		"#format"   "{1:i}"
@@ -218,8 +222,8 @@
 	}
 	"Tank Heal Limit"
 	{
-		"#format"   "{1:i},{2:i}"
-		"en"        "You have healed [{red}{1}{default}/{olive}{2}{default}] times."
+		"#format"   "{1:N}{2:i},{3:i}"
+		"en"        "{lightgreen}{1}{default} has healed [{olive}{2}{default}/{olive}{3}{default}] times."
 	}
 	"Bought Nothing"
 	{
@@ -246,6 +250,21 @@
 	"Announce Special Infected Purchase"
 	{
 		"#format"   "{1:N},{2:s}"
-		"en"        "{lightgreen}{1}{default} purchased a {lightgreen}{2}{default}"
+		"en"        "{lightgreen}{1}{default} spawned a {lightgreen}{2}{default}"
+	}
+	"Round End Show Points"
+	{
+		"#format"   "{1:N},{2:i}"
+		"en"        "{lightgreen}{1}{default} ended the round with {olive}{2}{default} points."
+	}
+	"Insufficient Funds Announce"
+	{
+		"#format"   "{1:N},{2:i},{3:s}"
+		"en"        "{lightgreen}{1}{default} needs {olive}{2}{default} points to buy a {olive}{3}{default}."
+	}
+	"Insufficient Funds"
+	{
+		"#format"   "{1:i},{2:s}"
+		"en"        "You need {olive}{1}{default} points to buy a {olive}{2}{default}."
 	}
 }

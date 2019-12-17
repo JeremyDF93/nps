@@ -37,7 +37,6 @@ enum NyxBuy {
 	String:Buy_Shortcut[16],
 	String:Buy_TeamName[16],
 	Buy_Cost,
-	bool:Buy_MustBeAlive,
 	bool:Buy_MustBeIncapacitated,
 	Buy_SpawnLimit,
 	bool:Buy_Announce
@@ -70,7 +69,8 @@ enum NyxConVar {
 	ConVar:ConVar_HeadshotStreak,
 	ConVar:ConVar_TankHealLimit,
 	ConVar:ConVar_TankDelay,
-	ConVar:ConVar_TankAllowedFinal
+	ConVar:ConVar_TankAllowedFinal,
+	ConVar:ConVar_AnnounceNeeds
 }
 
 /***
@@ -106,6 +106,9 @@ bool g_bMaxPointsWarning[MAXPLAYERS + 1];
 bool g_bFinal;
 bool g_bTankAllowed;
 
+int g_iStartTime;
+int g_iStartTimePassed;
+
 /***
  *        ____  __            _          ____      __            ____              
  *       / __ \/ /_  ______ _(_)___     /  _/___  / /____  _____/ __/___ _________ 
@@ -129,7 +132,7 @@ public void OnPluginStart() {
 
 	// Admin commands
 	RegAdminCmd("sm_setpoints", AdmCmd_SetPoints, ADMFLAG_ROOT, "nyx_givepoints <#userid|name> <points>");
-	RegAdminCmd("sm_reloadcfg", AdmCmd_ReloadConfig, ADMFLAG_ROOT);
+	RegAdminCmd("nyx_reloadcfg", AdmCmd_ReloadConfig, ADMFLAG_ROOT);
 
 	// ConVars
 	g_hConVars[ConVar_MaxPoints] = CreateConVar("nyx_ps_max_points", "120", "Max player points.");
@@ -137,8 +140,9 @@ public void OnPluginStart() {
 	g_hConVars[ConVar_KillStreak] = CreateConVar("nyx_ps_killstreak", "25", "Number of infected required to kill in order to get a killstreak.");
 	g_hConVars[ConVar_HeadshotStreak] = CreateConVar("nyx_ps_headshot_streak", "20", "Number of infected headshots required in order to get a headshot killstreak.");
 	g_hConVars[ConVar_TankHealLimit] = CreateConVar("nyx_ps_tank_heal_limit", "3", "Maximum number of times the tank can heal in a life.");
-	g_hConVars[ConVar_TankDelay] = CreateConVar("nyx_ps_tank_delay", "90", "Time to delay tank spawning after survivors leave the safe area.");
-	g_hConVars[ConVar_TankAllowedFinal] = CreateConVar("nyx_ps_tank_allowed_final", "0", "Tank allowed in final?");
+	g_hConVars[ConVar_TankDelay] = CreateConVar("nyx_ps_tank_delay", "90", "Time (in seconds) to delay tank spawning after survivors leave the safe area.");
+	g_hConVars[ConVar_TankAllowedFinal] = CreateConVar("nyx_ps_tank_allowed_final", "0", "Tank allowed in final?", _, true, 0.0, true, 1.0);
+	g_hConVars[ConVar_AnnounceNeeds] = CreateConVar("nyx_ps_announce_needs", "1", "Announce when a player tries to buy with insufficient funds.", _, true, 0.0, true, 1.0);
 
 	// Register events
 	HookEvent("player_spawn", Event_PlayerSpawn);
@@ -188,12 +192,16 @@ public void OnMapStart() {
 	}
 
 	g_bFinal = false;
-	g_bTankAllowed = false;
+	g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
+}
+
+public void OnConfigsExecuted() {
+	for (int i = 1; i <= MaxClients; i++) {
+		SetPlayerDefaults(i);
+	}
 }
 
 public void OnClientAuthorized(int client) {
-	if (IsValidClient(client)) return;
-
 	SetPlayerDefaults(client, false);
 }
 
@@ -201,15 +209,28 @@ public void OnClientPostAdminCheck(int client) {
 	if (IsValidClient(client)) return;
 
 	Handle cookie = RegClientCookie("points", "Player Points", CookieAccess_Protected);
+	
+	int timestamp = GetClientCookieTime(client, cookie);
+	if ((GetTime() - timestamp) < 60) {
+		char buffer[16];
+		GetClientCookie(client, cookie, buffer, sizeof(buffer));
 
-	char buffer[16];
-	GetClientCookie(client, cookie, buffer, sizeof(buffer));
-
-	int result;
-	if (StringToIntEx(buffer, result) == 0) {
-		result = g_hConVars[ConVar_StartPoints].IntValue;
+		int result;
+		if (StringToIntEx(buffer, result) == 0) {
+			result = g_hConVars[ConVar_StartPoints].IntValue;
+		}
+		g_aPlayerStorage[client][Player_Points] = result;
 	}
-	g_aPlayerStorage[client][Player_Points] = result;
+}
+
+public void OnGameFrame() {
+	if (!g_bTankAllowed && g_iStartTime > 0) {
+		g_iStartTimePassed = GetTime() - g_iStartTime;
+		
+		if (g_iStartTimePassed >= g_hConVars[ConVar_TankDelay].IntValue) {
+			g_bTankAllowed = true;
+		}
+	}
 }
 
 /***
@@ -222,7 +243,11 @@ public void OnClientPostAdminCheck(int client) {
  */
 
 public Action L4D_OnFirstSurvivorLeftSafeArea(int client) {
-	CreateTimer(g_hConVars[ConVar_TankDelay].FloatValue, Timer_TankAllowed);
+	if (g_hConVars[ConVar_TankDelay].IntValue == 0) {
+		g_bTankAllowed = true;
+	} else {
+		g_iStartTime = GetTime();
+	}
 
 	return Plugin_Continue;
 }
@@ -408,30 +433,12 @@ public Action Event_InfectedDeath(Event event, const char[] name, bool dontBroad
 	return Plugin_Continue;
 }
 
-/*
-public Action Event_InfectedHurt(Event event, const char[] name, bool dontBroadcast) {
-	int victim = GetClientOfUserId(event.GetInt("entityid"));
-	int attacker = GetClientOfUserId(event.GetInt("attacker"));
-
-	if (!IsValidClient(victim, true)) return Plugin_Continue;
-	if (IsPlayerInfected(victim) && IsPlayerTank(victim)) {
-		int health = GetEntProp(victim, Prop_Data, "m_iHealth");
-		int max_health = GetEntProp(victim, Prop_Data, "m_iMaxHealth");
-		int percent = RoundFloat((health / max_health) * 100.0);
-
-		NyxMsgDebug("Tank has %i%% health left.", percent);
-	}
-
-	return Plugin_Continue;
-}
-*/
-
 public Action Event_TankKilled(Event event, const char[] name, bool dontBroadcast) {
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	bool solo = event.GetBool("solo");
 
-	g_aPlayerStorage[attacker][Player_BurnedWitch] = false;
+	g_aPlayerStorage[attacker][Player_BurnedTank] = false;
 	g_aPlayerStorage[victim][Player_HealCount] = 0;
 
 	if (!IsValidClient(attacker)) return Plugin_Continue;
@@ -726,8 +733,23 @@ public Action Event_FinaleWin(Event event, const char[] name, bool dontBroadcast
 }
 
 public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
-	int winner = event.GetInt("winner");
+	int winner = event.GetInt("winner"); // FUCKING USELESS
+	int reason = event.GetInt("reason");
+	char message[256];
+	event.GetString("message", message, sizeof(message));
+	NyxMsgDebug("winner(always zero in vs, why? *sad*): %i, reason: %i, message: %s", winner, reason, message);
+
+	g_bFinal = false;
+
+	if (reason == 5) {
+		for (int i = 1; i <= MaxClients; i++) {
+			if (!IsValidClient(i, true)) continue;
+
+			NyxPrintToTeam(GetClientTeam(i), "%t", "Round End Show Points", i, GetClientPoints(i));
+		}
+	}
 	
+	/*
 	for (int i = 1; i <= MaxClients; i++) {
 		if (!IsValidClient(i, true)) continue;
 		if (GetClientTeam(i) != winner) continue;
@@ -751,8 +773,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 			NyxPrintToChat(i, "%t", "Round Lost", GetPlayerReward(i));
 		}
 	}
-
-	g_bFinal = false;
+	*/
 
 	return Plugin_Continue;
 }
@@ -765,10 +786,6 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
  *    /_/ /_/_/ /_/ /_/\___/_/  /____/  
  *                                      
  */
-
-public Action Timer_TankAllowed(Handle timer) {
-	g_bTankAllowed = true;
-}
 
 public Action Timer_MaxPoints(Handle timer, any client) {
 	g_bMaxPointsWarning[client] = false;
@@ -841,7 +858,7 @@ public Action ConCmd_Buy(int client, int args) {
 		if (!IsValidClient(client)) {
 			NyxMsgReply(client, "Cannot display buy menu to console");
 		} else if (GetClientPoints(client) <= 0) {
-			NyxPrintToChat(client, "%t", "Insufficient Points");
+			NyxPrintToChat(client, "%t", "No Points");
 		} else {
 			Display_MainMenu(client);
 		}
@@ -864,7 +881,7 @@ public Action ConCmd_GivePoints(int client, int args) {
 		if (!IsValidClient(client)) {
 			NyxMsgReply(client, "Cannot display buy menu to console");
 		} else if (GetClientPoints(client) <= 0) {
-			NyxPrintToChat(client, "%t", "Insufficient Points");
+			NyxPrintToChat(client, "%t", "No Points");
 		} else {
 			Display_GivePointsMenu(client);
 		}
@@ -873,23 +890,28 @@ public Action ConCmd_GivePoints(int client, int args) {
 	}
 
 	int target = GetCmdTarget(1, client, false, false);
-	int amount = GetCmdIntEx(2, 1, 120, 5);
+	int amount = GetCmdIntEx(2, 1, g_hConVars[ConVar_MaxPoints].IntValue, 5);
 
-	if (GetClientPoints(client) < amount) {
-		NyxPrintToChat(client, "%t", "Insufficient Points");
-	} else if (client == target) {
+	if (client == target) {
 		NyxPrintToChat(client, "%t", "Sent Self Points");
 	} else if (GetClientTeam(client) != GetClientTeam(target)) {
 		NyxPrintToChat(client, "%t", "Sent Wrong Team Points");
 	} else {
+		int points = GetClientPoints(client);
+		if (amount > points) {
+			amount = points;
+		}
+
 		int spent = GiveClientPoints(target, amount);
+		if (spent == 0) {
+			NyxPrintToChat(client, "%t", "Sent Zero Points");
+			return Plugin_Handled;
+		}
+
 		SubClientPoints(client, spent);
 		NyxPrintToTeam(GetClientTeam(client), "%t", "Sent Points", client, spent, target);
 		NyxPrintToChat(client, "%t", "Points Left", GetClientPoints(client));
 
-		if (spent == 0) {
-			NyxPrintToChat(client, "%t", "Sent Zero Points");
-		}
 	}
 
 	return Plugin_Handled;
@@ -1342,7 +1364,14 @@ bool BuyItem(int client, const char[] item_name) {
 		return false;
 	}
 	if (GetClientPoints(client) < data[Buy_Cost]) {
-		NyxPrintToChat(client, "%t", "Insufficient Points");
+		if (g_hConVars[ConVar_AnnounceNeeds].BoolValue) {
+			NyxPrintToTeam(GetClientTeam(client), "%t", "Insufficient Funds Announce", 
+					client, data[Buy_Cost] - GetClientPoints(client), data[Buy_Name]);
+		} else {
+			NyxPrintToChat(client, "%t", "Insufficient Funds",
+					data[Buy_Cost] - GetClientPoints(client), data[Buy_Name]);
+		}
+
 		return false;
 	}
 	if (!StrEqual(data[Buy_TeamName], "both", false)) {
@@ -1351,16 +1380,14 @@ bool BuyItem(int client, const char[] item_name) {
 			return false;
 		}
 	}
-	if (!IsPlayerAlive(client) && data[Buy_MustBeAlive]) {
-		NyxPrintToChat(client, "%t", "Must Be Alive");
-		return false;
-	}
-	if ((IsPlayerAlive(client) || IsPlayerGhost(client)) && !data[Buy_MustBeAlive]) {
-		NyxPrintToChat(client, "%t", "Must Be Dead");
-		return false;
+	if (!IsPlayerAlive(client)) {
+		if (IsPlayerSurvivor(client)) {
+			NyxPrintToChat(client, "%t", "Must Be Alive");
+			return false;
+		}
 	}
 	if (!IsPlayerIncapacitated(client) && data[Buy_MustBeIncapacitated]) {
-		if (L4D2_GetClientTeam(client) == L4D2Team_Survivor) {
+		if (IsPlayerSurvivor(client)) {
 			NyxPrintToChat(client, "%t", "Must Be Incapacitated");
 			return false;
 		}
@@ -1388,21 +1415,21 @@ bool BuyItem(int client, const char[] item_name) {
 		g_aPlayerStorage[client][Player_HealCount]++;
 
 		if (IsPlayerTank(client)) {
+			// tank death loop fix
+			if (GetEntProp(client, Prop_Send, "m_nSequence") >= 65) { // start of tank death animation 67-77
+				NyxPrintToChat(client, "%t", "Must Be Alive");
+				return false;
+			}
+
 			if (g_hConVars[ConVar_TankHealLimit].IntValue > 0) {
 				if (g_aPlayerStorage[client][Player_HealCount] > g_hConVars[ConVar_TankHealLimit].IntValue) {
 					NyxPrintToChat(client, "%t", "Heal Limit Reached");
 					return false;
 				}
 
-				// TODO: client wants it printed to the whole team
-				NyxPrintToChat(client, "%t", "Tank Heal Limit", g_aPlayerStorage[client][Player_HealCount],
+				NyxPrintToTeam(GetClientTeam(client), "%t", "Tank Heal Limit", client,
+						g_aPlayerStorage[client][Player_HealCount],
 						g_hConVars[ConVar_TankHealLimit].IntValue);
-			}
-
-			// tank death loop fix
-			if (GetEntProp(client, Prop_Data, "m_iHealth") > GetEntProp(client, Prop_Data, "m_iMaxHealth")) {
-				NyxPrintToChat(client, "%t", "Must Be Alive");
-				return false;
 			}
 		}
 	}
@@ -1413,9 +1440,9 @@ bool BuyItem(int client, const char[] item_name) {
 				return false;
 			}
 
-			int time = g_hConVars[ConVar_TankDelay].IntValue;
-			int minutes = time / 60;
-			int seconds = time % 60;
+			int timeLeft = g_hConVars[ConVar_TankDelay].IntValue - g_iStartTimePassed;
+			int minutes = timeLeft / 60;
+			int seconds = timeLeft % 60;
 
 			if (minutes) {
 				NyxPrintToChat(client, "%t", "Tank Allowed in Minutes", minutes);
@@ -1434,7 +1461,9 @@ bool BuyItem(int client, const char[] item_name) {
 
 	strcopy(g_aPlayerStorage[client][Player_LastItem], 64, data[Buy_Section]);
 	if (data[Buy_Announce]) {
-		NyxPrintToAll(client, "%t", "Announce Special Infected Purchase", client, data[Buy_Name]);
+		if (StrEqual(data[Buy_Group], "infected", false)) {
+			NyxPrintToAll(client, "%t", "Announce Special Infected Purchase", client, data[Buy_Name]);
+		}
 	}
 
 	return true;
@@ -1452,7 +1481,6 @@ bool GetItemData(const char[] item_name, any[NyxBuy] data) {
 		g_hData.GetString("command", data[Buy_Command], sizeof(data[Buy_Command]), "give");
 		g_hData.GetString("command_args", data[Buy_CommandArgs], sizeof(data[Buy_CommandArgs]));
 		g_hData.GetString("team_name", data[Buy_TeamName], sizeof(data[Buy_TeamName]), "both");
-		data[Buy_MustBeAlive] = (g_hData.GetNum("must_be_alive", 1) == 1);
 
 		// check if the group we're in has sections
 		if (!g_hData.GotoFirstSubKey()) {
@@ -1478,7 +1506,6 @@ bool GetItemData(const char[] item_name, any[NyxBuy] data) {
 				g_hData.GetString("command_args", data[Buy_CommandArgs], sizeof(data[Buy_CommandArgs]), data[Buy_CommandArgs]);
 				g_hData.GetString("team_name", data[Buy_TeamName], sizeof(data[Buy_TeamName]), data[Buy_TeamName]);
 				data[Buy_Cost] = g_hData.GetNum("cost", -1);
-				data[Buy_MustBeAlive] = (g_hData.GetNum("must_be_alive", data[Buy_MustBeAlive]) == 1);
 				data[Buy_MustBeIncapacitated] = (g_hData.GetNum("must_be_incapacitated", 0) == 1);
 				data[Buy_SpawnLimit] = g_hData.GetNum("spawn_limit", -1);
 				data[Buy_Announce] = (g_hData.GetNum("announce", 0) == 1);
@@ -1626,6 +1653,7 @@ bool IsPlayerGhost(int client) {
 
 bool IsPlayerTank(int client) {
 	if (!IsValidClient(client)) return false;
+	if (IsPlayerSurvivor(client)) return false;
 	if (GetEntProp(client, Prop_Send, "m_zombieClass") != 8) return false;
 	
 	return true;
