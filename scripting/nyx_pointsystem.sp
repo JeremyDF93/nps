@@ -133,6 +133,7 @@ public void OnPluginStart() {
 	// Admin commands
 	RegAdminCmd("sm_setpoints", AdmCmd_SetPoints, ADMFLAG_ROOT, "nyx_givepoints <#userid|name> <points>");
 	RegAdminCmd("nyx_reloadcfg", AdmCmd_ReloadConfig, ADMFLAG_ROOT);
+	RegAdminCmd("nyx_debugbuy", AdmCmd_DebugBuy, ADMFLAG_ROOT);
 
 	// ConVars
 	g_hConVars[ConVar_MaxPoints] = CreateConVar("nyx_ps_max_points", "120", "Max player points.");
@@ -844,6 +845,42 @@ public Action AdmCmd_ReloadConfig(int client, int args) {
 	return Plugin_Handled;
 }
 
+public Action AdmCmd_DebugBuy(int client, int args) {
+	if (args < 1) {
+		NyxMsgReply(client, "Usage: nyx_debugbuy <item_name>");
+		return Plugin_Handled;
+	}
+
+	char item_name[32];
+	GetCmdArg(1, item_name, sizeof(item_name));
+
+	if (IsValidClient(client)) {
+		any data[NyxBuy];
+		bool exists = GetItemData(item_name, data);
+
+		if (exists) {
+			NyxMsgDebug("Group: %s, Section: %s, Name: %s, Cost %i",
+					data[Buy_Group],
+					data[Buy_Section],
+					data[Buy_Name],
+					data[Buy_Cost]);
+			NyxMsgDebug("Shortcut: %s, Command: %s, CommandArgs: %s, TeamName: %s",
+					data[Buy_Shortcut],
+					data[Buy_Command],
+					data[Buy_CommandArgs],
+					data[Buy_TeamName]);
+			NyxMsgDebug("MustBeIncapacitated: %i, SpawnLimit: %i, Announce: %i",
+					data[Buy_MustBeIncapacitated],
+					data[Buy_SpawnLimit],
+					data[Buy_Announce]);
+		} else {
+			NyxPrintToChat(client, "%t", "Item Doesn't Exist", item_name);
+		}
+	}
+
+	return Plugin_Handled;
+}
+
 /***
  *       ______                       __        ______                                          __    
  *      / ____/___  ____  _________  / /__     / ____/___  ____ ___  ____ ___  ____ _____  ____/ /____
@@ -869,7 +906,7 @@ public Action ConCmd_Buy(int client, int args) {
 	char item_name[32];
 	GetCmdArg(1, item_name, sizeof(item_name));
 
-	if (IsValidClient(client) || true) {
+	if (IsValidClient(client)) {
 		BuyItem(client, item_name);
 	}
 
@@ -1347,18 +1384,6 @@ bool BuyItem(int client, const char[] item_name) {
 	any data[NyxBuy];
 	bool exists = GetItemData(item_name, data);
 
-/* Uncomment for debugging
-	NyxMsgDebug("Group: %s, Section: %s, Name: %s, Cost %i",
-						data[Buy_Group],
-						data[Buy_Section],
-						data[Buy_Name],
-						data[Buy_Cost];
-	NyxMsgDebug("Shortcut: %s, Command: %s, CommandArgs: %s",
-						data[Buy_Shortcut],
-						data[Buy_Command],
-						data[Buy_CommandArgs]);
-*/
-
 	if (!exists) {
 		NyxPrintToChat(client, "%t", "Item Doesn't Exist", item_name);
 		return false;
@@ -1646,7 +1671,7 @@ bool IsPlayerInfected(int client) {
 
 bool IsPlayerGhost(int client) {
 	if (!IsValidClient(client)) return false;
-	if (!GetEntData(client, FindSendPropInfo("CTerrorPlayer", "m_isGhost"), 1)) return false;
+	if (!GetEntProp(client, Prop_Send, "m_isGhost")) return false;
 
 	return true;
 }
