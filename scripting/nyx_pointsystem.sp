@@ -4,7 +4,7 @@
 #include <left4downtown>
 #include <colors>
 
-#define NYX_DEBUG          2
+#define NYX_DEBUG          0
 #define NYX_PLUGIN_NAME    "PS"
 #define NYX_PLUGIN_VERSION "1.0"
 #include <nyxtools>
@@ -43,6 +43,7 @@ enum NyxBuy {
 }
 
 enum NyxPlayer {
+	Player_UserID,
 	Player_Points,
 	Player_Reward,
 	Player_Headshots,
@@ -119,6 +120,8 @@ int g_iStartTimePassed;
  */
 
 public void OnPluginStart() {
+	NyxMsgDebug("OnPluginStart");
+
 	LoadTranslations("common.phrases");
 	LoadTranslations("nyx_pointsystem.phrases");
 
@@ -174,16 +177,22 @@ public void OnPluginStart() {
 	// KeyValues
 	g_hData = GetKeyValuesFromFile("buy.cfg", "data");
 	g_hRewards = GetKeyValuesFromFile("rewards.cfg", "data");
+
+	for (int i = 1; i <= MaxClients; i++) {
+		SetPlayerDefaults(i);
+		g_aPlayerStorage[i][Player_UserID] = -1;
+	}
 }
 
 public void OnMapStart() {
+	NyxMsgDebug("OnMapStart");
+
 	char map[PLATFORM_MAX_PATH];
 	GetCurrentMap(map, sizeof(map));
 	if (StrContains(map, "m1_") != -1) {
-		NyxMsgDebug("OnMapStart Triggered a Reset");
-
 		for (int i = 1; i <= MaxClients; i++) {
 			SetPlayerDefaults(i);
+			g_aPlayerStorage[i][Player_UserID] = -1;
 		}
 
 		for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
@@ -195,42 +204,12 @@ public void OnMapStart() {
 	g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
 }
 
-public void OnConfigsExecuted() {
-	for (int i = 1; i <= MaxClients; i++) {
-		SetPlayerDefaults(i);
-	}
-}
-
-public void OnClientAuthorized(int client) {
-	SetPlayerDefaults(client, false);
-}
-
 public void OnClientPostAdminCheck(int client) {
-	if (!IsValidClient(client)) return;
-
-	Handle cookie = RegClientCookie("points", "Player Points", CookieAccess_Protected);
-	
-	int timestamp = GetClientCookieTime(client, cookie);
-	if ((GetTime() - timestamp) < 60) {
-		char buffer[16];
-		GetClientCookie(client, cookie, buffer, sizeof(buffer));
-
-		int result;
-		if (StringToIntEx(buffer, result) == 0) {
-			result = g_hConVars[ConVar_StartPoints].IntValue;
-		}
-		g_aPlayerStorage[client][Player_Points] = result;
+	int userid = GetClientUserId(client);
+	if (g_aPlayerStorage[client][Player_UserID] != userid) {
+		SetPlayerDefaults(client);
+		g_aPlayerStorage[client][Player_UserID] = userid;
 	}
-}
-
-public void OnClientDisconnect(int client) {
-	if (!IsValidClient(client)) return;
-
-	Handle cookie = RegClientCookie("points", "Player Points", CookieAccess_Protected);
-
-	char buffer[16];
-	IntToString(GetClientPoints(client), buffer, sizeof(buffer));
-	SetClientCookie(client, cookie, buffer);
 }
 
 public void OnGameFrame() {
@@ -263,6 +242,7 @@ public Action L4D_OnFirstSurvivorLeftSafeArea(int client) {
 }
 
 public void L4D_OnReplaceTank(int tank, int newtank) {
+	g_aPlayerStorage[newtank][Player_HealCount] = g_aPlayerStorage[tank][Player_HealCount];
 	g_aPlayerStorage[tank][Player_HealCount] = 0;
 }
 
@@ -270,7 +250,8 @@ public Action L4D2_OnEndVersusModeRound(bool countSurvivors) {
 	int winner = countSurvivors ? L4D2_TEAM_SURVIVOR : L4D2_TEAM_INFECTED;
 
 	for (int i = 1; i <= MaxClients; i++) {
-		if (!IsValidClient(i, true)) continue;
+		if (!IsValidClient(i)) continue;
+		if (!IsClientPlaying(i)) continue;
 		if (GetClientTeam(i) == winner) {
 			NyxError error = RewardPoints(i, "round_won");
 			if (error) {
@@ -302,7 +283,7 @@ public Action L4D2_OnEndVersusModeRound(bool countSurvivors) {
 
  public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	if (!IsValidClient(client, true)) return Plugin_Continue;
+	if (!IsValidClient(client)) return Plugin_Continue;
 	if (GetClientTeam(client) == L4D2_TEAM_INFECTED) {
 		L4D2ClassType class = L4D2_GetClientClass(client);
 		g_iSpawnCount[class]++;
@@ -316,12 +297,31 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	//bool headshot = event.GetBool("headshot");
 
+	NyxMsgDebug("Event_PlayerDeath(victim: %N, attacker: %Nd)", victim, attacker);
+
 	g_aPlayerStorage[victim][Player_HealCount] = 0;
 
-	if (!IsValidClient(attacker, true)) return Plugin_Continue;
+	if (!IsValidClient(attacker)) return Plugin_Continue;
 	if (IsPlayerSurvivor(attacker)) {
 		if (!IsPlayerInfected(victim)) return Plugin_Continue;
-		if (IsPlayerTank(victim)) return Plugin_Continue;
+		if (IsPlayerTank(victim)) {
+			if (IsFakeClient(victim)) return Plugin_Continue;
+
+			for (int i = 1; i <= MaxClients; i++) {
+				if (!IsValidClient(i)) continue;
+				if (!IsPlayerSurvivor(i)) continue;
+				if (!IsPlayerAlive(i)) continue;
+
+				NyxError error = RewardPoints(i, "killed_tank");
+				if (error) {
+					HandleError(i, error);
+				} else {
+					NyxPrintToChat(i, "%t", "Killed Tank", GetPlayerReward(i), victim);
+				}
+			}
+
+			return Plugin_Continue;
+		}
 
 		NyxError error = RewardPoints(attacker, "killed_special_infected");
 		if (!error) {
@@ -348,7 +348,7 @@ public Action Event_PlayerHurt(Event event, const char[] name, bool dontBroadcas
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int type = event.GetInt("type");
 
-	if (!IsValidClient(attacker, true)) return Plugin_Continue;
+	if (!IsValidClient(attacker)) return Plugin_Continue;
 	if (IsPlayerInfected(attacker) && IsPlayerSurvivor(victim)) {
 		g_aPlayerStorage[attacker][Player_HurtCount]++;
 
@@ -382,7 +382,7 @@ public Action Event_PlayerIncapacitated(Event event, const char[] name, bool don
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 
-	if (!IsValidClient(attacker, true)) return Plugin_Continue;
+	if (!IsValidClient(attacker)) return Plugin_Continue;
 	if (IsPlayerInfected(attacker)) {
 		NyxError error = RewardPoints(attacker, "incapacitated_player");
 		if (!error) {
@@ -399,7 +399,7 @@ public Action Event_PlayerNowIt(Event event, const char[] name, bool dontBroadca
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 
-	if (!IsValidClient(attacker, true)) return Plugin_Continue;
+	if (!IsValidClient(attacker)) return Plugin_Continue;
 	if (IsPlayerSurvivor(attacker)) {
 		if (!IsPlayerTank(victim)) return Plugin_Continue;
 
@@ -424,11 +424,13 @@ public Action Event_PlayerNowIt(Event event, const char[] name, bool dontBroadca
 }
 
 public Action Event_InfectedDeath(Event event, const char[] name, bool dontBroadcast) {
-	//int victim = GetClientOfUserId(event.GetInt("infected_id"));
+	int victim = GetClientOfUserId(event.GetInt("infected_id"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	bool headshot = event.GetBool("headshot");
 
-	if (!IsValidClient(attacker, true)) return Plugin_Continue;
+	NyxMsgDebug("Event_InfectedDeath(victim: %N, attacker: %Nd)", victim, attacker);
+
+	if (!IsValidClient(attacker)) return Plugin_Continue;
 	if (IsPlayerSurvivor(attacker)) {
 		int streak;
 
@@ -438,7 +440,6 @@ public Action Event_InfectedDeath(Event event, const char[] name, bool dontBroad
 			streak = g_hConVars[ConVar_HeadshotStreak].IntValue;
 			if (streak > 0) {
 				if ((g_aPlayerStorage[attacker][Player_Headshots] % streak) == 0) {
-					RewardPoints(attacker, "headshot_streak");
 					NyxError error = RewardPoints(attacker, "headshot_streak");
 					if (!error) {
 						NyxPrintToChat(attacker, "%t", "Headshot Streak", GetPlayerReward(attacker), streak);
@@ -454,7 +455,6 @@ public Action Event_InfectedDeath(Event event, const char[] name, bool dontBroad
 		streak = g_hConVars[ConVar_KillStreak].IntValue;
 		if (streak > 0) {
 			if ((g_aPlayerStorage[attacker][Player_Kills] % streak) == 0) {
-				RewardPoints(attacker, "kill_streak");
 				NyxError error = RewardPoints(attacker, "kill_streak");
 				if (!error) {
 					NyxPrintToChat(attacker, "%t", "Kill Streak", GetPlayerReward(attacker), streak);
@@ -473,6 +473,8 @@ public Action Event_TankKilled(Event event, const char[] name, bool dontBroadcas
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	bool solo = event.GetBool("solo");
 
+	NyxMsgDebug("Event_TankKilled(victim: %N, attacker: %N, solo: %d)", victim, attacker, solo);
+
 	g_aPlayerStorage[attacker][Player_BurnedTank] = false;
 	g_aPlayerStorage[victim][Player_HealCount] = 0;
 
@@ -485,11 +487,14 @@ public Action Event_TankKilled(Event event, const char[] name, bool dontBroadcas
 			} else {
 				HandleError(attacker, error);
 			}
+
+			return Plugin_Continue;
 		}
 
 		for (int i = 1; i <= MaxClients; i++) {
-			if (!IsValidClient(i, true)) continue;
+			if (!IsValidClient(i)) continue;
 			if (!IsPlayerSurvivor(i)) continue;
+			if (!IsPlayerAlive(i)) continue;
 
 			NyxError error = RewardPoints(i, "killed_tank");
 			if (error) {
@@ -511,7 +516,7 @@ public Action Event_WitchKilled(Event event, const char[] name, bool dontBroadca
 	g_aPlayerStorage[attacker][Player_BurnedWitch] = false;
 	g_aPlayerStorage[victim][Player_HealCount] = 0;
 
-	if (!IsValidClient(attacker, true)) return Plugin_Continue;
+	if (!IsValidClient(attacker)) return Plugin_Continue;
 	if (IsPlayerSurvivor(attacker)) {
 		if (oneshot) {
 			NyxError error = RewardPoints(attacker, "killed_witch_oneshot");
@@ -537,7 +542,7 @@ public Action Event_ChokeStart(Event event, const char[] name, bool dontBroadcas
 	int attacker = GetClientOfUserId(event.GetInt("userid"));
 	int victim = GetClientOfUserId(event.GetInt("victim"));
 
-	if (!IsValidClient(attacker, true)) return Plugin_Continue;
+	if (!IsValidClient(attacker)) return Plugin_Continue;
 	if (IsPlayerInfected(attacker)) {
 		NyxError error = RewardPoints(attacker, "choke_player");
 		if (!error) {
@@ -554,7 +559,7 @@ public Action Event_LungePounce(Event event, const char[] name, bool dontBroadca
 	int attacker = GetClientOfUserId(event.GetInt("userid"));
 	int victim = GetClientOfUserId(event.GetInt("victim"));
 
-	if (!IsValidClient(attacker, true)) return Plugin_Continue;
+	if (!IsValidClient(attacker)) return Plugin_Continue;
 	if (IsPlayerInfected(attacker)) {
 		NyxError error = RewardPoints(attacker, "pounce_player");
 		if (!error) {
@@ -571,7 +576,7 @@ public Action Event_JockeyRide(Event event, const char[] name, bool dontBroadcas
 	int attacker = GetClientOfUserId(event.GetInt("userid"));
 	int victim = GetClientOfUserId(event.GetInt("victim"));
 
-	if (!IsValidClient(attacker, true)) return Plugin_Continue;
+	if (!IsValidClient(attacker)) return Plugin_Continue;
 	if (IsPlayerInfected(attacker)) {
 		NyxError error = RewardPoints(attacker, "ride_player");
 		if (!error) {
@@ -588,7 +593,7 @@ public Action Event_ChargerCarryStart(Event event, const char[] name, bool dontB
 	int attacker = GetClientOfUserId(event.GetInt("userid"));
 	int victim = GetClientOfUserId(event.GetInt("victim"));
 
-	if (!IsValidClient(attacker, true)) return Plugin_Continue;
+	if (!IsValidClient(attacker)) return Plugin_Continue;
 	if (IsPlayerInfected(attacker)) {
 		NyxError error = RewardPoints(attacker, "carry_player");
 		if (!error) {
@@ -605,7 +610,7 @@ public Action Event_ChargerImpact(Event event, const char[] name, bool dontBroad
 	int attacker = GetClientOfUserId(event.GetInt("userid"));
 	int victim = GetClientOfUserId(event.GetInt("victim"));
 
-	if (!IsValidClient(attacker, true)) return Plugin_Continue;
+	if (!IsValidClient(attacker)) return Plugin_Continue;
 	if (IsPlayerInfected(attacker)) {
 		NyxError error = RewardPoints(attacker, "impact_player");
 		if (!error) {
@@ -703,7 +708,7 @@ public Action Event_DefibrillatorUsed(Event event, const char[] name, bool dontB
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	int subject = GetClientOfUserId(event.GetInt("subject"));
 
-	if (IsValidClient(client, true)) return Plugin_Continue;
+	if (IsValidClient(client)) return Plugin_Continue;
 	if (IsPlayerSurvivor(client)) {
 		NyxError error = RewardPoints(client, "defibrillator_used");
 		if (!error) {
@@ -722,7 +727,7 @@ public Action Event_ZombieIgnited(Event event, const char[] name, bool dontBroad
 	char victimname[16];
 	event.GetString("userid", victimname, sizeof(victimname));
 
-	if (IsValidClient(client, true)) return Plugin_Continue;
+	if (IsValidClient(client)) return Plugin_Continue;
 	if (IsPlayerSurvivor(client)) {
 		if (StrEqual("Tank", victimname, false) && !g_aPlayerStorage[client][Player_BurnedTank]) {
 			g_aPlayerStorage[client][Player_BurnedTank] = true;
@@ -761,7 +766,6 @@ public Action Event_FinaleStart(Event event, const char[] name, bool dontBroadca
 
 public Action Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	g_bFinal = false;
-
 	NyxMsgDebug("Event_FinaleWin");
 
 	return Plugin_Continue;
@@ -952,7 +956,7 @@ public Action ConCmd_ShowPoints(int client, int args) {
 
 public Action ConCmd_ShowTeamPoints(int client, int args) {
 	for (int i = 1; i <= MaxClients; i++) {
-		if (!IsValidClient(i, true)) continue;
+		if (!IsValidClient(i)) continue;
 		if (GetClientTeam(i) != GetClientTeam(client)) continue;
 		if (i == client) {
 			NyxPrintToChat(client, "%t", "Show Points", GetClientPoints(client));
@@ -1273,7 +1277,7 @@ public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int 
 
 				SubClientPoints(param1, spent);
 				NyxPrintToTeam(GetClientTeam(param1), "%t", "Sent Points", param1, spent, target);
-				NyxPrintToChat(param1, "%t", "My Points", GetClientPoints(param1));
+				NyxPrintToChat(param1, "%t", "Points Left", GetClientPoints(param1));
 
 				if (spent == 0) {
 					NyxPrintToChat(param1, "%t", "Sent Zero Points");
@@ -1583,11 +1587,8 @@ KeyValues GetKeyValuesFromFile(const char[] file, const char[] section, bool fai
  *                                                 
  */
 
-void SetPlayerDefaults(int client, bool points=true) {
-	if (points) {
-		SetClientPoints(client, g_hConVars[ConVar_StartPoints].IntValue);
-	}
-
+void SetPlayerDefaults(int client) {
+	g_aPlayerStorage[client][Player_Points] = g_hConVars[ConVar_StartPoints].IntValue;
 	g_aPlayerStorage[client][Player_Reward] = 0;
 	g_aPlayerStorage[client][Player_Headshots] = 0;
 	g_aPlayerStorage[client][Player_Kills] = 0;
@@ -1608,12 +1609,7 @@ int GetClientPoints(int client) {
 
 void SetClientPoints(int client, int points) {
 	g_aPlayerStorage[client][Player_Points] = points;
-
-	Handle cookie = RegClientCookie("points", "Player Points", CookieAccess_Protected);
-
-	char buffer[16];
-	IntToString(points, buffer, sizeof(buffer));
-	SetClientCookie(client, cookie, buffer);
+	g_aPlayerStorage[client][Player_UserID] = GetClientUserId(client);
 }
 
 void AddClientPoints(int client, int points) {
@@ -1641,6 +1637,16 @@ int GiveClientPoints(int client, int points) {
 
 	AddClientPoints(client, points);
 	return points;
+}
+
+bool IsClientPlaying(int client) {
+  if (!IsValidClient(client)) return false;
+
+  int team = GetClientTeam(client);
+  if (team == L4D2_TEAM_SURVIVOR) return true;
+  if (team == L4D2_TEAM_INFECTED) return true;
+
+  return false;
 }
 
 bool IsPlayerSurvivor(int client) {
@@ -1705,7 +1711,7 @@ stock void NyxPrintToAll(int team, char[] format, any ...) {
 	VFormat(buffer, sizeof(buffer), format, 3);
 
 	for (int i = 1; i <= MaxClients; i++) {
-		if (!IsValidClient(i, true)) continue;
+		if (!IsValidClient(i)) continue;
 
 		NyxPrintToChat(i, buffer);
 	}
@@ -1716,7 +1722,7 @@ stock void NyxPrintToTeam(int team, char[] format, any ...) {
 	VFormat(buffer, sizeof(buffer), format, 3);
 
 	for (int i = 1; i <= MaxClients; i++) {
-		if (!IsValidClient(i, true)) continue;
+		if (!IsValidClient(i)) continue;
 		if (GetClientTeam(i) != team) continue;
 
 		NyxPrintToChat(i, buffer);
