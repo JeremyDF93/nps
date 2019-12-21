@@ -1,270 +1,270 @@
 "Phrases"
 {
-	"Reward"
-	{
-		"#format"   "{1:i}"
-		"en"        "{olive}+{1}{default} points awarded."
-	}
-	"Sent Points"
-	{
-		"#format"   "{1:N},{2:i},{3:N}"
-		"en"        "{lightgreen}{1}{default} sent {olive}{2}{default} points to {lightgreen}{3}{default}."
-	}
-	"Sent Self Points"
-	{
-		"en"        "You can't send points to yourself!"
-	}
-	"Sent Wrong Team Points"
-	{
-		"en"        "You can't give points so someone on the other team!"
-	}
-	"Sent Zero Points"
-	{
-		"en"        "You sent zero points."
-	}
-	"Insufficient Points"
-	{
-		"en"        "You don't have enough points."
-	}
-	"No Points"
-	{
-		"en"        "You don't have any points."
-	}
+  "Reward"
+  {
+    "#format"   "{1:i}"
+    "en"        "{olive}+{1}{default} points awarded."
+  }
+  "Sent Points"
+  {
+    "#format"   "{1:N},{2:i},{3:N}"
+    "en"        "{lightgreen}{1}{default} sent {olive}{2}{default} points to {lightgreen}{3}{default}."
+  }
+  "Sent Self Points"
+  {
+    "en"        "You can't send points to yourself!"
+  }
+  "Sent Wrong Team Points"
+  {
+    "en"        "You can't give points so someone on the other team!"
+  }
+  "Sent Zero Points"
+  {
+    "en"        "You sent zero points."
+  }
+  "Insufficient Points"
+  {
+    "en"        "You don't have enough points."
+  }
+  "No Points"
+  {
+    "en"        "You don't have any points."
+  }
   "Points Left"
-	{
-		"#format"   "{1:i}"
-		"en"        "You have {olive}{1}{default} points left."
-	}
-	"Max Points"
-	{
-		"#format"   "{1:i},{2:i}"
-		"en"        "You have received the maximum number of points [{red}{1}{default}/{olive}{2}{default}]"
-	}
-	"Item Doesn't Exist"
-	{
-		"#format"   "{1:s}"
-		"en"        "The item '{olive}{1}{default}' could not be found!"
-	}
-	"Must Be Alive"
-	{
-		"en"        "You must be alive to do this."
-	}
-	"Must Be Dead"
-	{
-		"en"        "You must be dead to do this."
-	}
-	"Must Be Incapacitated"
-	{
-		"en"        "You must be incapacitated to do this."
-	}
-	"Must Not Be Grabbed"
-	{
-		"en"        "You can not do this while grabbed."
-	}
-	"Item Wrong Team"
-	{
-		"en"        "You can only buy this item when on the other team!"
-	}
-	"Show Points"
-	{
-		"#format"   "{1:i}"
-		"en"        "You currently have {olive}{1}{default} points."
-	}
-	"Show Points Other"
-	{
-		"#format"   "{1:N},{2:i}"
-		"en"        "{lightgreen}{1}{default} currently has {olive}{2}{default} points."
-	}
-	
-	"Killed Special Infected"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
-	}
-	"Killed Survivor"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
-	}
-	"Hurt Player"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for hurting {lightgreen}{2}{default}."
-	}
-	"Incapacitated Player"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for incapacitating {lightgreen}{2}{default}."
-	}
-	"Bile Tank"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for using a bile jar on {lightgreen}{2}{default}."
-	}
-	"Bile Player"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for vomiting on {lightgreen}{2}{default}."
-	}
-	"Kill Streak"
-	{
-		"#format"   "{1:i},{2:i}"
-		"en"        "{olive}+{1}{default} points awarded for killing {olive}{2}{default} infected."
-	}
-	"Headshot Streak"
-	{
-		"#format"   "{1:i},{2:i}"
-		"en"        "{olive}+{1}{default} points awarded for getting {olive}{2}{default} headshots!"
-	}
-	"Killed Tank"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
-	}
-	"Killed Tank Solo"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default} solo."
-	}
-	"Killed Witch"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
-	}
-	"Killed Witch Oneshot"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default} in one shot."
-	}
-	"Choke Player"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for choking {lightgreen}{2}{default}."
-	}
-	"Pounce Player"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for pouncing {lightgreen}{2}{default}."
-	}
-	"Ride Player"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for riding {lightgreen}{2}{default}."
-	}
-	"Carry Player"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for carrying {lightgreen}{2}{default}."
-	}
-	"Impact Player"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for inpacting {lightgreen}{2}{default}."
-	}
-	"Healed Player"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for healing {lightgreen}{2}{default}."
-	}
-	"Healed Player Partial"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for partially healing {lightgreen}{2}{default}."
-	}
-	"Protected Player"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for protecting {lightgreen}{2}{default}."
-	}
-	"Revived Player"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for reviving {lightgreen}{2}{default}."
-	}
-	"Revived Player From Ledge"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for saving {lightgreen}{2}{default} from a ledge."
-	}
-	"Defibrillator Used"
-	{
-		"#format"   "{1:i},{2:N}"
-		"en"        "{olive}+{1}{default} points awarded for reviving {lightgreen}{2}{default} from the dead."
-	}
-	"Burned Tank"
-	{
-		"#format"   "{1:i}"
-		"en"        "{olive}+{1}{default} points awarded for burning the {lightgreen}Tank{default}"
-	}
-	"Burned Witch"
-	{
-		"#format"   "{1:i}"
-		"en"        "{olive}+{1}{default} points awarded for burning the {lightgreen}Witch{default}"
-	}
-	"Round Won"
-	{
-		"#format"   "{1:i}"
-		"en"        "{olive}+{1}{default} points awarded for winning."
-	}
-	"Round Lost"
-	{
-		"#format"   "{1:i}"
-		"en"        "{olive}+{1}{default} points awarded for loosing."
-	}
-	"Spawn Limit Reached"
-	{
-		"#format"   "{1:s}"
-		"en"        "Spawn limit reached for {olive}{1}{default}."
-	}
-	"Heal Limit Reached"
-	{
-		"en"        "You have reached the heal limit."
-	}
-	"Tank Heal Limit"
-	{
-		"#format"   "{1:N}{2:i},{3:i}"
-		"en"        "{lightgreen}{1}{default} has healed [{olive}{2}{default}/{olive}{3}{default}] times."
-	}
-	"Bought Nothing"
-	{
-		"en"        "You haven't bought anything yet."
-	}
-	"Health is Full"
-	{
-		"en"        "You already have full health."
-	}
-	"Tank Allowed in Minutes"
-	{
-		"#format"   "{1:i}"
-		"en"        "You must wait {olive}{1}{default} minutes before you can become the tank."
-	}
-	"Tank Allowed in Seconds"
-	{
-		"#format"   "{1:i}"
-		"en"        "You must wait {olive}{1}{default} seconds before you can become the tank."
-	}
-	"Tank Not Allowed in Final"
-	{
-		"en"        "Tank is not allowed in final."
-	}
-	"Announce Special Infected Purchase"
-	{
-		"#format"   "{1:N},{2:s}"
-		"en"        "{lightgreen}{1}{default} spawned a {lightgreen}{2}{default}"
-	}
-	"Round End Show Points"
-	{
-		"#format"   "{1:N},{2:i}"
-		"en"        "{lightgreen}{1}{default} ended the round with {olive}{2}{default} points."
-	}
-	"Insufficient Funds Announce"
-	{
-		"#format"   "{1:N},{2:i},{3:s}"
-		"en"        "{lightgreen}{1}{default} needs {olive}{2}{default} points to buy a {olive}{3}{default}."
-	}
-	"Insufficient Funds"
-	{
-		"#format"   "{1:i},{2:s}"
-		"en"        "You need {olive}{1}{default} points to buy a {olive}{2}{default}."
-	}
+  {
+    "#format"   "{1:i}"
+    "en"        "You have {olive}{1}{default} points left."
+  }
+  "Max Points"
+  {
+    "#format"   "{1:i},{2:i}"
+    "en"        "You have received the maximum number of points [{red}{1}{default}/{olive}{2}{default}]"
+  }
+  "Item Doesn't Exist"
+  {
+    "#format"   "{1:s}"
+    "en"        "The item '{olive}{1}{default}' could not be found!"
+  }
+  "Must Be Alive"
+  {
+    "en"        "You must be alive to do this."
+  }
+  "Must Be Dead"
+  {
+    "en"        "You must be dead to do this."
+  }
+  "Must Be Incapacitated"
+  {
+    "en"        "You must be incapacitated to do this."
+  }
+  "Must Not Be Grabbed"
+  {
+    "en"        "You can not do this while grabbed."
+  }
+  "Item Wrong Team"
+  {
+    "en"        "You can only buy this item when on the other team!"
+  }
+  "Show Points"
+  {
+    "#format"   "{1:i}"
+    "en"        "You currently have {olive}{1}{default} points."
+  }
+  "Show Points Other"
+  {
+    "#format"   "{1:N},{2:i}"
+    "en"        "{lightgreen}{1}{default} currently has {olive}{2}{default} points."
+  }
+  
+  "Killed Special Infected"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
+  }
+  "Killed Survivor"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
+  }
+  "Hurt Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for hurting {lightgreen}{2}{default}."
+  }
+  "Incapacitated Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for incapacitating {lightgreen}{2}{default}."
+  }
+  "Bile Tank"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for using a bile jar on {lightgreen}{2}{default}."
+  }
+  "Bile Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for vomiting on {lightgreen}{2}{default}."
+  }
+  "Kill Streak"
+  {
+    "#format"   "{1:i},{2:i}"
+    "en"        "{olive}+{1}{default} points awarded for killing {olive}{2}{default} infected."
+  }
+  "Headshot Streak"
+  {
+    "#format"   "{1:i},{2:i}"
+    "en"        "{olive}+{1}{default} points awarded for getting {olive}{2}{default} headshots!"
+  }
+  "Killed Tank"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
+  }
+  "Killed Tank Solo"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default} solo."
+  }
+  "Killed Witch"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
+  }
+  "Killed Witch Oneshot"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default} in one shot."
+  }
+  "Choke Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for choking {lightgreen}{2}{default}."
+  }
+  "Pounce Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for pouncing {lightgreen}{2}{default}."
+  }
+  "Ride Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for riding {lightgreen}{2}{default}."
+  }
+  "Carry Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for carrying {lightgreen}{2}{default}."
+  }
+  "Impact Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for inpacting {lightgreen}{2}{default}."
+  }
+  "Healed Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for healing {lightgreen}{2}{default}."
+  }
+  "Healed Player Partial"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for partially healing {lightgreen}{2}{default}."
+  }
+  "Protected Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for protecting {lightgreen}{2}{default}."
+  }
+  "Revived Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for reviving {lightgreen}{2}{default}."
+  }
+  "Revived Player From Ledge"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for saving {lightgreen}{2}{default} from a ledge."
+  }
+  "Defibrillator Used"
+  {
+    "#format"   "{1:i},{2:N}"
+    "en"        "{olive}+{1}{default} points awarded for reviving {lightgreen}{2}{default} from the dead."
+  }
+  "Burned Tank"
+  {
+    "#format"   "{1:i}"
+    "en"        "{olive}+{1}{default} points awarded for burning the {lightgreen}Tank{default}"
+  }
+  "Burned Witch"
+  {
+    "#format"   "{1:i}"
+    "en"        "{olive}+{1}{default} points awarded for burning the {lightgreen}Witch{default}"
+  }
+  "Round Won"
+  {
+    "#format"   "{1:i}"
+    "en"        "{olive}+{1}{default} points awarded for winning."
+  }
+  "Round Lost"
+  {
+    "#format"   "{1:i}"
+    "en"        "{olive}+{1}{default} points awarded for loosing."
+  }
+  "Spawn Limit Reached"
+  {
+    "#format"   "{1:s}"
+    "en"        "Spawn limit reached for {olive}{1}{default}."
+  }
+  "Heal Limit Reached"
+  {
+    "en"        "You have reached the heal limit."
+  }
+  "Tank Heal Limit"
+  {
+    "#format"   "{1:N}{2:i},{3:i}"
+    "en"        "{lightgreen}{1}{default} has healed [{olive}{2}{default}/{olive}{3}{default}] times."
+  }
+  "Bought Nothing"
+  {
+    "en"        "You haven't bought anything yet."
+  }
+  "Health is Full"
+  {
+    "en"        "You already have full health."
+  }
+  "Tank Allowed in Minutes"
+  {
+    "#format"   "{1:i}"
+    "en"        "You must wait {olive}{1}{default} minutes before you can become the tank."
+  }
+  "Tank Allowed in Seconds"
+  {
+    "#format"   "{1:i}"
+    "en"        "You must wait {olive}{1}{default} seconds before you can become the tank."
+  }
+  "Tank Not Allowed in Final"
+  {
+    "en"        "Tank is not allowed in final."
+  }
+  "Announce Special Infected Purchase"
+  {
+    "#format"   "{1:N},{2:s}"
+    "en"        "{lightgreen}{1}{default} spawned a {lightgreen}{2}{default}"
+  }
+  "Round End Show Points"
+  {
+    "#format"   "{1:N},{2:i}"
+    "en"        "{lightgreen}{1}{default} ended the round with {olive}{2}{default} points."
+  }
+  "Insufficient Funds Announce"
+  {
+    "#format"   "{1:N},{2:i},{3:s}"
+    "en"        "{lightgreen}{1}{default} needs {olive}{2}{default} points to buy a {olive}{3}{default}."
+  }
+  "Insufficient Funds"
+  {
+    "#format"   "{1:i},{2:s}"
+    "en"        "You need {olive}{1}{default} points to buy a {olive}{2}{default}."
+  }
 }
