@@ -2,6 +2,7 @@
 cd "$(dirname "$0")"
 
 SMSDK=/home/jeremy/Projects/alliedmodders/sourcemod
+NYXTOOLS=../nyxtools
 
 test -e compiled || mkdir compiled
 
@@ -10,7 +11,7 @@ if [[ $# -ne 0 ]]; then
 	do
 		smxfile="`echo $i | sed -e 's/\.sp$/\.smx/'`";
 		echo -e "Compiling $i...";
-		spcomp $i -iinclude -i$SMSDK/plugins/include -ocompiled/$smxfile
+		spcomp $i -iinclude -i$SMSDK/plugins/include -i$NYXTOOLS/scripting/include -ocompiled/$smxfile
 		RETVAL=$?
 		if [ $RETVAL -ne 0 ]; then
 			exit 1;
@@ -21,7 +22,7 @@ else
 	do
 		smxfile="`echo $sourcefile | sed -e 's/\.sp$/\.smx/'`"
 		echo -e "Compiling $sourcefile ..."
-		spcomp $sourcefile -iinclude -i$SMSDK/plugins/include -ocompiled/$smxfile
+		spcomp $sourcefile -iinclude -i$SMSDK/plugins/include -i$NYXTOOLS/scripting/include -ocompiled/$smxfile
 		RETVAL=$?
 		if [ $RETVAL -ne 0 ]; then
 			exit 1;

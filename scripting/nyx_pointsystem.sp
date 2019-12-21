@@ -8,6 +8,7 @@
 #define NYX_PLUGIN_NAME    "PS"
 #define NYX_PLUGIN_VERSION "1.0"
 #include <nyxtools>
+#include <nyxtools_l4d2>
 
 #pragma newdecls required
 
@@ -1637,61 +1638,6 @@ int GiveClientPoints(int client, int points) {
 
 	AddClientPoints(client, points);
 	return points;
-}
-
-bool IsClientPlaying(int client) {
-  if (!IsValidClient(client)) return false;
-
-  int team = GetClientTeam(client);
-  if (team == L4D2_TEAM_SURVIVOR) return true;
-  if (team == L4D2_TEAM_INFECTED) return true;
-
-  return false;
-}
-
-bool IsPlayerSurvivor(int client) {
-	if (!IsValidClient(client)) return false;
-	if (GetClientTeam(client) == L4D2_TEAM_INFECTED) return false;
-
-	return true;
-}
-
-bool IsPlayerInfected(int client) {
-	if (!IsValidClient(client)) return false;
-	if (GetClientTeam(client) == L4D2_TEAM_SURVIVOR) return false;
-
-	return true;
-}
-
-bool IsPlayerGhost(int client) {
-	if (!IsValidClient(client)) return false;
-	if (!GetEntProp(client, Prop_Send, "m_isGhost")) return false;
-
-	return true;
-}
-
-bool IsPlayerTank(int client) {
-	if (!IsValidClient(client)) return false;
-	if (IsPlayerSurvivor(client)) return false;
-	if (GetEntProp(client, Prop_Send, "m_zombieClass") != 8) return false;
-	
-	return true;
-}
-
-bool IsPlayerGrabbed(int client) {
-	if (GetEntProp(client, Prop_Send, "m_pummelAttacker") > 0) return true;
-	if (GetEntProp(client, Prop_Send, "m_carryAttacker") > 0) return true;
-	if (GetEntProp(client, Prop_Send, "m_pounceAttacker") > 0) return true;
-	if (GetEntProp(client, Prop_Send, "m_jockeyAttacker") > 0) return true;
-	if (GetEntProp(client, Prop_Send, "m_tongueOwner") > 0) return true;
-
-	return false;
-}
-
-bool IsPlayerIncapacitated(int client) {
-	if (GetEntProp(client, Prop_Send, "m_isIncapacitated") > 0) return true;
-	
-	return false;
 }
 
 bool IsFireDamage(int type){

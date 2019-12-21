@@ -1,0 +1,3 @@
+[submodule "nyxtools"]
+	path = nyxtools
+	url = https://github.com/JeremyDF93/nyxtools.git
