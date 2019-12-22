@@ -175,6 +175,8 @@ public void OnPluginStart() {
   HookEvent("finale_start", Event_FinaleStart);
   HookEvent("finale_win", Event_FinaleWin);
 
+  HookEvent("round_start", Event_RoundStart);
+
   // KeyValues
   g_hData = GetKeyValuesFromFile("buy.cfg", "data");
   g_hRewards = GetKeyValuesFromFile("rewards.cfg", "data");
@@ -768,6 +770,13 @@ public Action Event_FinaleStart(Event event, const char[] name, bool dontBroadca
 public Action Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
   g_bFinal = false;
   NyxMsgDebug("Event_FinaleWin");
+
+  return Plugin_Continue;
+}
+
+public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast) {
+  g_bFinal = false;
+  g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
 
   return Plugin_Continue;
 }
