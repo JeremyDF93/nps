@@ -8,9 +8,9 @@
 #define NYX_PLUGIN_NAME    "PS"
 #define NYX_PLUGIN_VERSION "1.0"
 #include <nyxtools>
-#undef REQUIRE_EXTENSIONS
+#undef REQUIRE_PLUGIN
 #include <nyxtools_l4d2>
-#define REQUIRE_EXTENSIONS
+#define REQUIRE_PLUGIN
 
 #pragma newdecls required
 
