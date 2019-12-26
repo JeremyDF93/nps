@@ -273,7 +273,7 @@ public Action L4D2_OnEndVersusModeRound(bool countSurvivors) {
       }
     }
 
-    NyxPrintToChat(i, "%t", "Round End Show Points", i, GetClientPoints(i));
+    NyxPrintToAll("%t", "Round End Show Points", i, GetClientPoints(i));
   }
 }
 
@@ -515,7 +515,7 @@ public Action Event_TankKilled(Event event, const char[] name, bool dontBroadcas
 
 public Action Event_WitchKilled(Event event, const char[] name, bool dontBroadcast) {
   int attacker = GetClientOfUserId(event.GetInt("userid"));
-  int victim = GetClientOfUserId(event.GetInt("witchid"));
+  int victim = event.GetInt("witchid");
   bool oneshot = event.GetBool("oneshot");
 
   g_aPlayerStorage[attacker][Player_BurnedWitch] = false;
@@ -1491,7 +1491,7 @@ bool BuyItem(int client, const char[] item_name) {
   strcopy(g_aPlayerStorage[client][Player_LastItem], 64, data[Buy_Section]);
   if (data[Buy_Announce]) {
     if (StrEqual(data[Buy_Group], "infected", false)) {
-      NyxPrintToAll(client, "%t", "Announce Special Infected Purchase", client, data[Buy_Name]);
+      NyxPrintToAll("%t", "Announce Special Infected Purchase", client, data[Buy_Name]);
     }
   }
 
@@ -1663,7 +1663,7 @@ bool IsSpitterDamage(int type){
   return false;
 }
 
-stock void NyxPrintToAll(int team, char[] format, any ...) {
+stock void NyxPrintToAll(char[] format, any ...) {
   char buffer[256];
   VFormat(buffer, sizeof(buffer), format, 3);
 
