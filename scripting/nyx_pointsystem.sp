@@ -4,7 +4,7 @@
 #include <left4downtown>
 #include <colors>
 
-#define NYX_DEBUG          0
+#define NYX_DEBUG          2
 #define NYX_PLUGIN_NAME    "PS"
 #define NYX_PLUGIN_VERSION "1.0"
 #include <nyxtools>
@@ -211,16 +211,6 @@ public void OnMapStart() {
 
 public void OnClientPostAdminCheck(int client) {
   int userid = GetClientUserId(client);
-  for (int i = 1; i <= MaxClients; i++) {
-    if (g_aPlayerStorage[i][Player_UserID] == userid) {
-      CopyPlayerStorage(i, client);
-      g_aPlayerStorage[client][Player_UserID] = userid;
-
-      SetPlayerDefaults(i);
-      g_aPlayerStorage[i][Player_UserID] = -1;
-    }
-  }
-
   if (g_aPlayerStorage[client][Player_UserID] != userid) {
     SetPlayerDefaults(client);
     g_aPlayerStorage[client][Player_UserID] = userid;
@@ -525,7 +515,7 @@ public Action Event_TankKilled(Event event, const char[] name, bool dontBroadcas
 
 public Action Event_WitchKilled(Event event, const char[] name, bool dontBroadcast) {
   int attacker = GetClientOfUserId(event.GetInt("userid"));
-  int victim = event.GetInt("witchid");
+  int victim = GetClientOfUserId(event.GetInt("witchid"));
   bool oneshot = event.GetBool("oneshot");
 
   g_aPlayerStorage[attacker][Player_BurnedWitch] = false;
@@ -1619,18 +1609,6 @@ void SetPlayerDefaults(int client) {
   g_aPlayerStorage[client][Player_BurnedTank] = false;
   g_aPlayerStorage[client][Player_ProtectCount] = 0;
   g_aPlayerStorage[client][Player_HealCount] = 0;
-}
-
-void CopyPlayerStorage(int source, int dest) {
-  g_aPlayerStorage[dest][Player_Points] = g_aPlayerStorage[source][Player_Points];
-  g_aPlayerStorage[dest][Player_Reward] = g_aPlayerStorage[source][Player_Reward];
-  g_aPlayerStorage[dest][Player_Headshots] = g_aPlayerStorage[source][Player_Headshots];
-  g_aPlayerStorage[dest][Player_Kills] = g_aPlayerStorage[source][Player_Kills];
-  g_aPlayerStorage[dest][Player_HurtCount] = g_aPlayerStorage[source][Player_HurtCount];
-  g_aPlayerStorage[dest][Player_BurnedWitch] = g_aPlayerStorage[source][Player_BurnedWitch];
-  g_aPlayerStorage[dest][Player_BurnedTank] = g_aPlayerStorage[source][Player_BurnedTank];
-  g_aPlayerStorage[dest][Player_ProtectCount] = g_aPlayerStorage[source][Player_ProtectCount];
-  g_aPlayerStorage[dest][Player_HealCount] = g_aPlayerStorage[source][Player_HealCount];
 }
 
 int GetPlayerReward(int client) {
