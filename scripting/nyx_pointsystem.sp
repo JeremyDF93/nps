@@ -220,6 +220,11 @@ public void OnClientPostAdminCheck(int client) {
       g_aPlayerStorage[i][Player_UserID] = -1;
     }
   }
+
+  if (g_aPlayerStorage[client][Player_UserID] != userid) {
+    SetPlayerDefaults(client);
+    g_aPlayerStorage[client][Player_UserID] = userid;
+  }
 }
 
 public void OnGameFrame() {
