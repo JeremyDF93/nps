@@ -276,7 +276,7 @@ public Action L4D2_OnEndVersusModeRound(bool countSurvivors) {
       }
     }
 
-    NyxPrintToAll("%t", "Round End Show Points", i, GetClientPoints(i));
+    NyxPrintToTeam(GetClientTeam(i), "%t", "Round End Show Points", i, GetClientPoints(i));
   }
 }
 
