@@ -4,13 +4,12 @@
 #include <left4downtown>
 #include <colors>
 
-#define NYX_DEBUG          2
+#define NYX_DEBUG          0
 #define NYX_PLUGIN_NAME    "PS"
 #define NYX_PLUGIN_VERSION "1.0"
 #include <nyxtools>
 #undef REQUIRE_PLUGIN
 #include <nyxtools_l4d2>
-#define REQUIRE_PLUGIN
 
 #pragma newdecls required
 
@@ -205,7 +204,7 @@ public void OnMapStart() {
     }
   }
 
-  g_bFinal = false;
+  g_bFinal = L4D_IsMissionFinalMap();
   g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
 }
 
@@ -1665,7 +1664,7 @@ bool IsSpitterDamage(int type){
 
 stock void NyxPrintToAll(char[] format, any ...) {
   char buffer[256];
-  VFormat(buffer, sizeof(buffer), format, 3);
+  VFormat(buffer, sizeof(buffer), format, 2);
 
   for (int i = 1; i <= MaxClients; i++) {
     if (!IsValidClient(i)) continue;
