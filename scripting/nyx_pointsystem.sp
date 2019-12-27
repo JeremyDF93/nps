@@ -207,6 +207,7 @@ public void OnMapStart() {
   }
 
   g_bFinal = L4D_IsMissionFinalMap();
+  g_iStartTime = 0;
   g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
 }
 
@@ -248,6 +249,7 @@ public Action L4D_OnFirstSurvivorLeftSafeArea(int client) {
 }
 
 public void L4D_OnReplaceTank(int tank, int newtank) {
+  NyxMsgDebug("L4D_OnReplaceTank");
   g_aPlayerStorage[newtank][Player_HealCount] = g_aPlayerStorage[tank][Player_HealCount];
   g_aPlayerStorage[tank][Player_HealCount] = 0;
 }
@@ -777,6 +779,7 @@ public Action Event_FinaleWin(Event event, const char[] name, bool dontBroadcast
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast) {
   NyxMsgDebug("Event_RoundStart");
+  g_iStartTime = 0;
   g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
 
   if (g_hConVars[ConVar_TopOff].BoolValue) {
