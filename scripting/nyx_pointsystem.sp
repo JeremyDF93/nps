@@ -868,28 +868,26 @@ public Action AdmCmd_DebugBuy(int client, int args) {
   char item_name[32];
   GetCmdArg(1, item_name, sizeof(item_name));
 
-  if (IsValidClient(client)) {
-    any data[NyxBuy];
-    bool exists = GetItemData(item_name, data);
+  any data[NyxBuy];
+  bool exists = GetItemData(item_name, data);
 
-    if (exists) {
-      NyxMsgDebug("Group: %s, Section: %s, Name: %s, Cost %i",
-          data[Buy_Group],
-          data[Buy_Section],
-          data[Buy_Name],
-          data[Buy_Cost]);
-      NyxMsgDebug("Shortcut: %s, Command: %s, CommandArgs: %s, TeamName: %s",
-          data[Buy_Shortcut],
-          data[Buy_Command],
-          data[Buy_CommandArgs],
-          data[Buy_TeamName]);
-      NyxMsgDebug("MustBeIncapacitated: %i, SpawnLimit: %i, Announce: %i",
-          data[Buy_MustBeIncapacitated],
-          data[Buy_SpawnLimit],
-          data[Buy_Announce]);
-    } else {
-      NyxPrintToChat(client, "%t", "Item Doesn't Exist", item_name);
-    }
+  if (exists) {
+    NyxMsgDebug("Group: %s, Section: %s, Name: %s, Cost %i",
+        data[Buy_Group],
+        data[Buy_Section],
+        data[Buy_Name],
+        data[Buy_Cost]);
+    NyxMsgDebug("Shortcut: %s, Command: %s, CommandArgs: %s, TeamName: %s",
+        data[Buy_Shortcut],
+        data[Buy_Command],
+        data[Buy_CommandArgs],
+        data[Buy_TeamName]);
+    NyxMsgDebug("MustBeIncapacitated: %i, SpawnLimit: %i, Announce: %i",
+        data[Buy_MustBeIncapacitated],
+        data[Buy_SpawnLimit],
+        data[Buy_Announce]);
+  } else {
+    NyxMsgReply(client, "%t", "Item Doesn't Exist", item_name);
   }
 
   return Plugin_Handled;
