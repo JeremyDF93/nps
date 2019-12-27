@@ -73,7 +73,8 @@ enum NyxConVar {
   ConVar:ConVar_TankHealLimit,
   ConVar:ConVar_TankDelay,
   ConVar:ConVar_TankAllowedFinal,
-  ConVar:ConVar_AnnounceNeeds
+  ConVar:ConVar_AnnounceNeeds,
+  ConVar:ConVar_TopOff
 }
 
 /***
@@ -149,6 +150,7 @@ public void OnPluginStart() {
   g_hConVars[ConVar_TankDelay] = CreateConVar("nyx_ps_tank_delay", "90", "Time (in seconds) to delay tank spawning after survivors leave the safe area.");
   g_hConVars[ConVar_TankAllowedFinal] = CreateConVar("nyx_ps_tank_allowed_final", "0", "Tank allowed in final?", _, true, 0.0, true, 1.0);
   g_hConVars[ConVar_AnnounceNeeds] = CreateConVar("nyx_ps_announce_needs", "1", "Announce when a player tries to buy with insufficient funds.", _, true, 0.0, true, 1.0);
+  g_hConVars[ConVar_TopOff] = CreateConVar("nyx_ps_topoff", "1", "Top off players with less than the minimal starting points.", _, true, 0.0, true, 1.0);
 
   // Register events
   HookEvent("player_spawn", Event_PlayerSpawn);
@@ -776,6 +778,14 @@ public Action Event_FinaleWin(Event event, const char[] name, bool dontBroadcast
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast) {
   NyxMsgDebug("Event_RoundStart");
   g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
+
+  if (g_hConVars[ConVar_TopOff].BoolValue) {
+    for (int i = 1; i <= MaxClients; i++) {
+      if (GetClientPoints(i) < g_hConVars[ConVar_StartPoints].IntValue) {
+        SetClientPoints(i, g_hConVars[ConVar_StartPoints].IntValue);
+      }
+    }
+  }
 
   return Plugin_Continue;
 }
