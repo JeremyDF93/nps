@@ -5,7 +5,7 @@
 #include <colors>
 
 #define NYX_DEBUG          1
-#define NYX_PLUGIN_NAME    "PS"
+#define NYX_PLUGIN_TAG    "PS"
 #define NYX_PLUGIN_VERSION "1.0"
 #include <nyxtools>
 #undef REQUIRE_PLUGIN
