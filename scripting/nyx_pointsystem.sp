@@ -287,11 +287,13 @@ public Action L4D2_OnEndVersusModeRound(bool countSurvivors) {
 
  public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
   int client = GetClientOfUserId(event.GetInt("userid"));
-  if (!IsValidClient(client)) return Plugin_Continue;
+  /*
+  if (!IsValidClient(client, true)) return Plugin_Continue;
   if (GetClientTeam(client) == L4D2_TEAM_INFECTED) {
     L4D2ClassType class = L4D2_GetClientClass(client);
     g_iSpawnCount[class]++;
   }
+  */
 
   return Plugin_Continue;
 }
@@ -1484,9 +1486,14 @@ bool BuyItem(int client, const char[] item_name) {
   SubClientPoints(client, data[Buy_Cost]);
 
   strcopy(g_aPlayerStorage[client][Player_LastItem], 64, data[Buy_Section]);
-  if (data[Buy_Announce]) {
-    if (StrEqual(data[Buy_Group], "infected", false)) {
+  if (StrEqual(data[Buy_Group], "infected", false)) {
+    if (data[Buy_Announce]) {
       NyxPrintToAll("%t", "Announce Special Infected Purchase", client, data[Buy_Name]);
+    }
+
+    L4D2ClassType class = L4D2_GetClassType(data[Buy_Section]);
+    if (class != L4D2Class_Unknown) {
+      g_iSpawnCount[class]++;
     }
   }
 
