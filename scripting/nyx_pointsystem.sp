@@ -4,7 +4,7 @@
 #include <left4downtown>
 #include <colors>
 
-#define NYX_DEBUG          0
+#define NYX_DEBUG          1
 #define NYX_PLUGIN_NAME    "PS"
 #define NYX_PLUGIN_VERSION "1.0"
 #include <nyxtools>
@@ -189,7 +189,7 @@ public void OnPluginStart() {
 }
 
 public void OnMapStart() {
-  NyxMsgDebug("OnMapStart");
+  NyxMsgDebug("OnMapStart, Final %b", L4D_IsMissionFinalMap());
 
   char map[PLATFORM_MAX_PATH];
   GetCurrentMap(map, sizeof(map));
@@ -254,7 +254,7 @@ public Action L4D2_OnEndVersusModeRound(bool countSurvivors) {
   int winner = countSurvivors ? L4D2_TEAM_SURVIVOR : L4D2_TEAM_INFECTED;
 
   for (int i = 1; i <= MaxClients; i++) {
-    if (!IsValidClient(i)) continue;
+    if (!IsValidClient(i, true)) continue;
     if (!IsClientPlaying(i)) continue;
     if (GetClientTeam(i) == winner) {
       NyxError error = RewardPoints(i, "round_won");
@@ -301,7 +301,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
   int attacker = GetClientOfUserId(event.GetInt("attacker"));
   //bool headshot = event.GetBool("headshot");
 
-  NyxMsgDebug("Event_PlayerDeath(victim: %N, attacker: %Nd)", victim, attacker);
+  //NyxMsgDebug("Event_PlayerDeath(victim: %N, attacker: %Nd)", victim, attacker);
 
   g_aPlayerStorage[victim][Player_HealCount] = 0;
 
@@ -432,7 +432,7 @@ public Action Event_InfectedDeath(Event event, const char[] name, bool dontBroad
   int attacker = GetClientOfUserId(event.GetInt("attacker"));
   bool headshot = event.GetBool("headshot");
 
-  NyxMsgDebug("Event_InfectedDeath(victim: %N, attacker: %Nd)", victim, attacker);
+  //NyxMsgDebug("Event_InfectedDeath(victim: %N, attacker: %Nd)", victim, attacker);
 
   if (!IsValidClient(attacker)) return Plugin_Continue;
   if (IsPlayerSurvivor(attacker)) {
