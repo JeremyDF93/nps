@@ -760,23 +760,19 @@ public Action Event_ZombieIgnited(Event event, const char[] name, bool dontBroad
 }
 
 public Action Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
-  g_bFinal = true;
-  g_bTankAllowed = g_hConVars[ConVar_TankAllowedFinal].BoolValue;
-
   NyxMsgDebug("Event_FinaleStart");
 
   return Plugin_Continue;
 }
 
 public Action Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
-  g_bFinal = false;
   NyxMsgDebug("Event_FinaleWin");
 
   return Plugin_Continue;
 }
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast) {
-  g_bFinal = false;
+  NyxMsgDebug("Event_RoundStart");
   g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
 
   return Plugin_Continue;
@@ -1462,12 +1458,12 @@ bool BuyItem(int client, const char[] item_name) {
     }
   }
   if (StrEqual(data[Buy_Section], "tank", false)) {
-    if (!g_bTankAllowed) {
-      if (g_bFinal) {
-        NyxPrintToChat(client, "%t", "Tank Not Allowed in Final");
-        return false;
-      }
+    if (g_bFinal && !g_hConVars[ConVar_TankAllowedFinal].BoolValue) {
+      NyxPrintToChat(client, "%t", "Tank Not Allowed in Final");
+      return false;
+    }
 
+    if (!g_bTankAllowed) {
       int timeLeft = g_hConVars[ConVar_TankDelay].IntValue - g_iStartTimePassed;
       int minutes = timeLeft / 60;
       int seconds = timeLeft % 60;
