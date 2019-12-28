@@ -45,6 +45,15 @@
     "#format"   "{1:s}"
     "en"        "The item '{olive}{1}{default}' could not be found!"
   }
+  "Unable to Give"
+  {
+    "en"        "Unable to find a player to give that item to."
+  }
+  "Bought Something For"
+  {
+    "#format"   "{1:N},{2:s},{3:N}"
+    "en"        "{lightgreen}{1}{default} bought {olive}{2}{default} for {lightgreen}{3}{default}."
+  }
   "Must Be Alive"
   {
     "en"        "You must be alive to do this."
