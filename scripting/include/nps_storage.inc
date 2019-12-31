@@ -3,8 +3,6 @@
 #endif
 #define _nps_storage_included
 
-#include <nyxtools>
-
 /***
  *        _   __      __  _                
  *       / | / /___ _/ /_(_)   _____  _____
@@ -22,12 +20,6 @@ public SharedPlugin:__pl_nps_storage = {
   required = 0,
 #endif
 };
-
-#if !defined REQUIRE_PLUGIN
-public __pl_nps_storage_SetNTVOptional() {
-  //MarkNativeAsOptional("");
-}
-#endif
 
 methodmap Player __nullable__ {
   public Player(int client) {
