@@ -4,9 +4,10 @@
 #include <left4downtown>
 #include <colors>
 
-#define NYX_DEBUG          1
-#define NYX_PLUGIN_TAG    "PS"
+#define NYX_DEBUG 1
+#define NYX_PLUGIN_TAG "PS"
 #include <nyxtools>
+#include <nyxtools_cheats>
 #undef REQUIRE_PLUGIN
 #include <nyxtools_l4d2>
 #define REQUIRE_PLUGIN
@@ -35,6 +36,7 @@ public Plugin myinfo = {
 
 enum NyxConVar {
   ConVar:ConVar_StartPoints,
+  ConVar:ConVar_MaxPoints,
   ConVar:ConVar_TankHealLimit,
   ConVar:ConVar_TankDelay,
   ConVar:ConVar_TankAllowedFinal,
@@ -61,8 +63,6 @@ enum NyxConVar {
  *    \____/_/\____/_.___/\__,_/_/____/  
  *                                       
  */
-
-KeyValues g_hConfig;
 
 int g_iMenuTarget[MAXPLAYERS + 1];
 int g_iSpawnCount[L4D2ClassType];
@@ -98,15 +98,14 @@ public void OnPluginStart() {
 
   // Admin commands
   RegAdminCmd("sm_setpoints", AdmCmd_SetPoints, ADMFLAG_ROOT, "nyx_givepoints <#userid|name> <points>");
-  RegAdminCmd("nyx_debugbuy", AdmCmd_DebugBuy, ADMFLAG_ROOT);
 
   // ConVars
-  g_hConVars[ConVar_StartPoints] = CreateConVar("nyx_ps_start_points", "10", "Starting player points.");
-  g_hConVars[ConVar_TankHealLimit] = CreateConVar("nyx_ps_tank_heal_limit", "3", "Maximum number of times the tank can heal in a life.");
-  g_hConVars[ConVar_TankDelay] = CreateConVar("nyx_ps_tank_delay", "90", "Time (in seconds) to delay tank spawning after survivors leave the safe area.");
-  g_hConVars[ConVar_TankAllowedFinal] = CreateConVar("nyx_ps_tank_allowed_final", "0", "Tank allowed in final?", _, true, 0.0, true, 1.0);
-  g_hConVars[ConVar_AnnounceNeeds] = CreateConVar("nyx_ps_announce_needs", "1", "Announce when a player tries to buy with insufficient funds.", _, true, 0.0, true, 1.0);
-  g_hConVars[ConVar_TopOff] = CreateConVar("nyx_ps_topoff", "1", "Top off players with less than the minimal starting points at the start of a round.", _, true, 0.0, true, 1.0);
+  g_hConVars[ConVar_StartPoints] = CreateConVar("nps_start_points", "10", "Starting player points.");
+  g_hConVars[ConVar_TankHealLimit] = CreateConVar("nps_tank_heal_limit", "3", "Maximum number of times the tank can heal in a life.");
+  g_hConVars[ConVar_TankDelay] = CreateConVar("nps_tank_start_delay", "90", "Time (in seconds) to delay tank spawning after survivors leave the safe area.");
+  g_hConVars[ConVar_TankAllowedFinal] = CreateConVar("nps_tank_allowed_final", "0", "Tank allowed on the final map?", _, true, 0.0, true, 1.0);
+  g_hConVars[ConVar_AnnounceNeeds] = CreateConVar("nps_announce_needs", "1", "Announce when a player tries to buy with insufficient funds.", _, true, 0.0, true, 1.0);
+  g_hConVars[ConVar_TopOff] = CreateConVar("nps_topoff", "1", "Top off players with less than the minimal starting points at the start of a round.", _, true, 0.0, true, 1.0);
 }
 
 public void OnMapStart() {
@@ -229,42 +228,11 @@ public Action AdmCmd_SetPoints(int client, int args) {
 
   int points = GetCmdIntEx(2, 0, _, 120);
   for (int i = 0; i < target_count; i++) {
-    SetClientPoints(target_list[i], points);
+    Player player = new Player(i);
+    player.Points = points;
     LogAction(client, target_list[i], "\"%L\" gave \"%i\" points to \"%L\"", client, points, target_list[i]);
   }
   NyxAct(client, "Gave %i points to %s", points, target_name);
-
-  return Plugin_Handled;
-}
-
-public Action AdmCmd_DebugBuy(int client, int args) {
-  if (args < 1) {
-    NyxMsgReply(client, "Usage: nyx_debugbuy <item_name>");
-    return Plugin_Handled;
-  }
-
-  char item_name[32];
-  GetCmdArg(1, item_name, sizeof(item_name));
-
-  any data[NyxBuy];
-  if (GetItemData(item_name, data)) {
-    NyxMsgDebug("Group: %s, Section: %s, Name: %s, Cost %i",
-        data[Buy_Group],
-        data[Buy_Section],
-        data[Buy_Name],
-        data[Buy_Cost]);
-    NyxMsgDebug("Shortcut: %s, Command: %s, CommandArgs: %s, TeamName: %s",
-        data[Buy_Shortcut],
-        data[Buy_Command],
-        data[Buy_CommandArgs],
-        data[Buy_TeamName]);
-    NyxMsgDebug("MustBeIncapacitated: %i, SpawnLimit: %i, Announce: %i",
-        data[Buy_MustBeIncapacitated],
-        data[Buy_SpawnLimit],
-        data[Buy_Announce]);
-  } else {
-    NyxMsgReply(client, "%t", "Item Doesn't Exist", item_name);
-  }
 
   return Plugin_Handled;
 }
@@ -282,25 +250,22 @@ public Action ConCmd_Buy(int client, int args) {
   if (args < 1) {
     if (!IsValidClient(client)) {
       NyxMsgReply(client, "Cannot display buy menu to console");
-    } else if (GetClientPoints(client) <= 0) {
-      NyxPrintToChat(client, "%t", "No Points");
-    } else {
-      Display_MainMenu(client);
     }
 
+    FakeClientCommandEx(client, "sm_buymenu");
     return Plugin_Handled;
   }
 
-  char item_name[32];
-  GetCmdArg(1, item_name, sizeof(item_name));
+  char item[32];
+  GetCmdArg(1, item, sizeof(item));
 
-  any data[NyxBuy];
-  if (!GetItemData(item_name, data)) {
-    NyxPrintToChat(client, "%t", "Item Doesn't Exist", item_name);
+  any storage[eCatalog];
+  if (!FindItem(item, storage)) {
+    NyxPrintToChat(client, "%t", "Item Doesn't Exist", item);
     return Plugin_Handled;
   }
 
-  if (!CanBuy(client, data)) {
+  if (!CanBuy(client, storage)) {
     return Plugin_Handled;
   }
 
@@ -333,13 +298,13 @@ public Action ConCmd_Buy(int client, int args) {
         return Plugin_Handled;
       }
 
-      BuyItem(client, target, data);
-      NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For", client, data[Buy_Name], target);
+      BuyItem(client, target, storage);
+      NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For", client, storage[Catalog_Name], target);
     } else {
-      BuyItem(client, client, data);
+      BuyItem(client, client, storage);
     }
   } else {
-    BuyItem(client, client, data);
+    BuyItem(client, client, storage);
   }
 
   return Plugin_Handled;
@@ -349,12 +314,9 @@ public Action ConCmd_GivePoints(int client, int args) {
   if (args < 1) {
     if (!IsValidClient(client)) {
       NyxMsgReply(client, "Cannot display buy menu to console");
-    } else if (GetClientPoints(client) <= 0) {
-      NyxPrintToChat(client, "%t", "No Points");
-    } else {
-      Display_GivePointsMenu(client);
     }
 
+    Display_GivePointsMenu(client);
     return Plugin_Handled;
   }
 
@@ -366,21 +328,21 @@ public Action ConCmd_GivePoints(int client, int args) {
   } else if (GetClientTeam(client) != GetClientTeam(target)) {
     NyxPrintToChat(client, "%t", "Sent Wrong Team Points");
   } else {
-    int points = GetClientPoints(client);
+    Player player = new Player(client);
+    int points = player.Points;
     if (amount > points) {
       amount = points;
     }
 
-    int spent = GiveClientPoints(target, amount);
+    int spent = (new Player(target)).GivePoints(amount, g_hConVars[ConVar_MaxPoints].IntValue);
     if (spent == 0) {
       NyxPrintToChat(client, "%t", "Sent Zero Points");
       return Plugin_Handled;
     }
 
-    SubClientPoints(client, spent);
+    player.Points -= spent;
     NyxPrintToTeam(GetClientTeam(client), "%t", "Sent Points", client, spent, target);
-    NyxPrintToChat(client, "%t", "Points Left", GetClientPoints(client));
-
+    NyxPrintToChat(client, "%t", "Points Left", player.Points);
   }
 
   return Plugin_Handled;
@@ -388,7 +350,8 @@ public Action ConCmd_GivePoints(int client, int args) {
 
 public Action ConCmd_ShowPoints(int client, int args) {
   if (IsValidClient(client)) {
-    NyxPrintToChat(client, "%t", "Show Points", GetClientPoints(client));
+    Player player = new Player(client);
+    NyxPrintToChat(client, "%t", "Show Points", player.Points);
   }
 
   return Plugin_Handled;
@@ -398,26 +361,28 @@ public Action ConCmd_ShowTeamPoints(int client, int args) {
   for (int i = 1; i <= MaxClients; i++) {
     if (!IsValidClient(i)) continue;
     if (GetClientTeam(i) != GetClientTeam(client)) continue;
+
+    Player player = new Player(i);
     if (i == client) {
-      NyxPrintToChat(client, "%t", "Show Points", GetClientPoints(client));
+      NyxPrintToChat(client, "%t", "Show Points", player.Points);
       continue;
     }
 
-    NyxPrintToChat(client, "%t", "Show Points Other", i, GetClientPoints(i));
+    NyxPrintToChat(client, "%t", "Show Points Other", i, player.Points);
   }
   return Plugin_Handled;
 }
 
 public Action ConCmd_Heal(int client, int args) {
   if (IsValidClient(client)) {
-    any data[NyxBuy];
-    if (!GetItemData("heal", data)) {
+    any storage[eCatalog];
+    if (!FindItem("heal", storage)) {
       NyxPrintToChat(client, "%t", "Item Doesn't Exist", "heal");
       return Plugin_Handled;
     }
 
-    if (CanBuy(client, data)) {
-      BuyItem(client, client, data);
+    if (CanBuy(client, storage)) {
+      BuyItem(client, client, storage);
     }
   }
 
@@ -426,20 +391,21 @@ public Action ConCmd_Heal(int client, int args) {
 
 public Action ConCmd_BuyAgain(int client, int args) {
   if (IsValidClient(client)) {
-    char buffer[256]; strcopy(buffer, sizeof(buffer), g_aPlayerStorage[client][Player_LastItem]);
+    Player player = new Player(client);
+    char buffer[256]; player.GetLastItem(buffer, sizeof(buffer));
     if (strlen(buffer) == 0) {
       NyxPrintToChat(client, "%t", "Bought Nothing");
       return Plugin_Handled;
     }
 
-    any data[NyxBuy];
-    if (!GetItemData(buffer, data)) {
+    any storage[eCatalog];
+    if (!FindItem(buffer, storage)) {
       NyxPrintToChat(client, "%t", "Item Doesn't Exist", buffer);
       return Plugin_Handled;
     }
 
-    if (CanBuy(client, data)) {
-      BuyItem(client, client, data);
+    if (CanBuy(client, storage)) {
+      BuyItem(client, client, storage);
     }
   }
 
@@ -459,8 +425,8 @@ void Display_ConfirmMenu(int client, const char[] info) {
   Menu menu = new Menu(MenuHandler_ConfirmMenu);
   
   char title[32];
-  any data[NyxBuy]; GetItemData(info, data);
-  Format(title, sizeof(title), "Cost: %i", data[Buy_Cost]);
+  any storage[eCatalog]; GetItemData(info, storage);
+  Format(title, sizeof(title), "Cost: %i", storage[Catalog_Cost]);
   menu.SetTitle(title);
 
   menu.AddItem(info, "Yes");
@@ -482,7 +448,8 @@ void Display_GiveAmountMenu(int client) {
   menu.SetTitle("Select Amount");
   menu.ExitBackButton = true;
 
-  int points = GetClientPoints(client);
+  Player player = new Player(client);
+  int points = player.Points;
 
   if (points >= 10) menu.AddItem("10", "10 Points");
   if (points >= 20) menu.AddItem("20", "20 Points");
@@ -506,7 +473,7 @@ public int MenuHandler_ConfirmMenu(Menu menu, MenuAction action, int param1, int
   } else if (action == MenuAction_Cancel) {
     if (param2 == MenuCancel_ExitBack) {
       if (IsValidClient(param1)) {
-        Display_MainMenu(param1);
+        //Display_MainMenu(param1);
       }
     }
 
@@ -516,14 +483,14 @@ public int MenuHandler_ConfirmMenu(Menu menu, MenuAction action, int param1, int
     menu.GetItem(param2, info, sizeof(info));
 
     if (IsValidClient(param1) && !StrEqual(info, "no", false)) {
-      any data[NyxBuy];
-      if (!GetItemData(info, data)) {
+      any storage[eCatalog];
+      if (!FindItem(info, storage)) {
         NyxPrintToChat(param1, "%t", "Item Doesn't Exist", info);
         return;
       }
 
-      if (CanBuy(param1, data)) {
-        BuyItem(param1, param1, data);
+      if (CanBuy(param1, storage)) {
+        BuyItem(param1, param1, storage);
       }
     }
   }
@@ -583,14 +550,15 @@ public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int 
     if ((target = GetClientOfUserId(g_iMenuTarget[param1])) == 0) {
       NyxPrintToChat(param1, "%t", "Player no longer available");
     } else {
-      if (GetClientPoints(param1) < amount) {
+      Player player = new Player(param1);
+      if (player.Points < amount) {
         NyxPrintToChat(param1, "%t", "Insufficient Points", amount);
       } else {
-        int spent = GiveClientPoints(target, amount);
-
-        SubClientPoints(param1, spent);
+        int spent = (new Player(target)).GivePoints(amount, g_hConVars[ConVar_MaxPoints].IntValue);
+        player.Points -= spent;
+        
         NyxPrintToTeam(GetClientTeam(param1), "%t", "Sent Points", param1, spent, target);
-        NyxPrintToChat(param1, "%t", "Points Left", GetClientPoints(param1));
+        NyxPrintToChat(param1, "%t", "Points Left", player.Points);
 
         if (spent == 0) {
           NyxPrintToChat(param1, "%t", "Sent Zero Points");
@@ -638,19 +606,21 @@ stock int AddTeamToMenu(Menu menu, int client) {
  *                                                     
  */
 
-bool CanBuy(int client, any[NyxBuy] data) {
-  if (GetClientPoints(client) < data[Buy_Cost]) {
+bool CanBuy(int client, any[eCatalog] storage) {
+  Player player = new Player(client);
+
+  if (player.Points < storage[Catalog_Cost]) {
     if (g_hConVars[ConVar_AnnounceNeeds].BoolValue) {
       NyxPrintToTeam(GetClientTeam(client), "%t", "Insufficient Funds Announce", 
-          client, data[Buy_Cost] - GetClientPoints(client), data[Buy_Name]);
+          client, storage[Catalog_Cost] - player.Points, storage[Catalog_Name]);
     } else {
       NyxPrintToChat(client, "%t", "Insufficient Funds",
-          data[Buy_Cost] - GetClientPoints(client), data[Buy_Name]);
+          storage[Catalog_Cost] - player.Points, storage[Catalog_Name]);
     }
 
     return false;
-  } else if (!StrEqual(data[Buy_TeamName], "both", false)) {
-    if (GetClientTeam(client) != L4D2_StringToTeam(data[Buy_TeamName])) {
+  } else if (!StrEqual(storage[Catalog_Team], "both", false)) {
+    if (GetClientTeam(client) != L4D2_StringToTeam(storage[Catalog_Team])) {
       NyxPrintToChat(client, "%t", "Item Wrong Team");
       return false;
     }
@@ -659,17 +629,17 @@ bool CanBuy(int client, any[NyxBuy] data) {
       NyxPrintToChat(client, "%t", "Must Be Alive");
       return false;
     }
-  } else if (!IsPlayerIncapacitated(client) && data[Buy_MustBeIncapacitated]) {
+  } else if (!IsPlayerIncapacitated(client) && storage[Catalog_MustBeIncapacitated]) {
     if (IsPlayerSurvivor(client)) {
       NyxPrintToChat(client, "%t", "Must Be Incapacitated");
       return false;
     }
-  } else if (data[Buy_SpawnLimit] > 0) {
-    if (g_iSpawnCount[L4D2_StringToClass(data[Buy_Section])] >= data[Buy_SpawnLimit]) {
-      NyxPrintToChat(client, "%t", "Spawn Limit Reached", data[Buy_Name]);
+  } else if (storage[Catalog_Limit] > 0) {
+    if (g_iSpawnCount[L4D2_StringToClass(storage[Catalog_Category])] >= storage[Catalog_Limit]) {
+      NyxPrintToChat(client, "%t", "Spawn Limit Reached", storage[Catalog_Name]);
       return false;
     }
-  } else if (StrEqual(data[Buy_Section], "health", false)) {
+  } else if (StrEqual(storage[Catalog_Category], "health", false)) {
     if (IsPlayerGrabbed(client)) {
       if (L4D2_GetClientTeam(client) == L4D2Team_Survivor) {
         NyxPrintToChat(client, "%t", "Must Not Be Grabbed");
@@ -688,17 +658,17 @@ bool CanBuy(int client, any[NyxBuy] data) {
       }
 
       if (g_hConVars[ConVar_TankHealLimit].IntValue > 0) {
-        if (g_aPlayerStorage[client][Player_HealCount] + 1 > g_hConVars[ConVar_TankHealLimit].IntValue) {
+        if (player.HealCount + 1 > g_hConVars[ConVar_TankHealLimit].IntValue) {
           NyxPrintToChat(client, "%t", "Heal Limit Reached");
           return false;
         }
 
         NyxPrintToTeam(GetClientTeam(client), "%t", "Tank Heal Limit", client,
-            g_aPlayerStorage[client][Player_HealCount] + 1,
+            player.HealCount + 1,
             g_hConVars[ConVar_TankHealLimit].IntValue);
       }
     }
-  } else if (StrEqual(data[Buy_Section], "tank", false)) {
+  } else if (StrEqual(storage[Catalog_Category], "tank", false)) {
     if (g_bFinal && !g_hConVars[ConVar_TankAllowedFinal].BoolValue) {
       NyxPrintToChat(client, "%t", "Tank Not Allowed in Final");
       return false;
@@ -722,25 +692,27 @@ bool CanBuy(int client, any[NyxBuy] data) {
   return true;
 }
 
-void BuyItem(int buyer, int receiver, any[NyxBuy] data) {
-  char command_args[256];
-  Format(command_args, sizeof(command_args), "%s %s", data[Buy_Section], data[Buy_CommandArgs]);
-  FakeClientCommandCheat(receiver, data[Buy_Command], command_args);
-  SubClientPoints(buyer, data[Buy_Cost]);
+void BuyItem(int buyer, int receiver, any[eCatalog] storage) {
+  Player player = new Player(buyer);
 
-  strcopy(g_aPlayerStorage[buyer][Player_LastItem], 64, data[Buy_Section]);
-  if (StrEqual(data[Buy_Group], "infected", false)) {
-    if (data[Buy_Announce]) {
-      NyxPrintToAll("%t", "Announce Special Infected Purchase", buyer, data[Buy_Name]);
+  char command_args[256];
+  Format(command_args, sizeof(command_args), "%s %s", storage[Catalog_Category], storage[Catalog_CommandArgs]);
+  FakeClientCommandCheat(receiver, storage[Catalog_Command], command_args);
+  player.Points -= storage[Catalog_Cost];
+  player.SetLastItem(storage[Catalog_Category]);
+
+  if (StrEqual(storage[Catalog_Category], "infected", false)) {
+    if (storage[Catalog_Announce]) {
+      NyxPrintToAll("%t", "Announce Special Infected Purchase", buyer, storage[Catalog_Name]);
     }
 
-    L4D2ClassType class = L4D2_StringToClass(data[Buy_Section]);
+    L4D2ClassType class = L4D2_StringToClass(storage[Catalog_Category]);
     if (class != L4D2Class_Unknown) {
       g_iSpawnCount[class]++;
     }
   }
   
-  if (StrEqual(data[Buy_Section], "health", false)) {
-    g_aPlayerStorage[receiver][Player_HealCount]++;
+  if (StrEqual(storage[Catalog_Category], "health", false)) {
+    player.HealCount++;
   }
 }

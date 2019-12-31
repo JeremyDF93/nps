@@ -24,6 +24,7 @@ enum eCatalog {
   Catalog_Cost,
   Catalog_Limit,
   bool:Catalog_Announce,
+  bool:Catalog_MustBeIncapacitated,
   String:Catalog_AnnouncePhrase[256]
 }
 
