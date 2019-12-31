@@ -73,6 +73,9 @@ bool g_bTankAllowed;
 int g_iStartTime;
 int g_iStartTimePassed;
 
+int g_iTimeCmd[MAXPLAYERS + 1];
+int g_iLastCmd[MAXPLAYERS + 1];
+
 /***
  *        ____  __            _          ____      __            ____              
  *       / __ \/ /_  ______ _(_)___     /  _/___  / /____  _____/ __/___ _________ 
@@ -154,6 +157,30 @@ public void OnGameFrame() {
       g_bTankAllowed = true;
     }
   }
+}
+
+public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3],
+    float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
+{
+  if (!IsValidClient(client, true)) return Plugin_Continue;
+
+  if (buttons & IN_RELOAD) {
+    g_iTimeCmd[client] = tickcount;
+    if (g_iTimeCmd[client] > (g_iLastCmd[client] + 30)) {
+      g_iLastCmd[client] = tickcount;
+    } else {
+      return Plugin_Continue;
+    }
+
+    if (IsPlayerSurvivor(client)) {
+      if (IsPlayerGrabbed(client)) return Plugin_Continue;
+      if (!IsPlayerIncapacitated(client)) return Plugin_Continue;
+
+      FakeClientCommandEx(client, "sm_buy %s", "heal"); // I'm so laze u.u
+    }
+  }
+
+  return Plugin_Continue;
 }
 
 /***
