@@ -203,11 +203,14 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
       for (int i = 1; i <= MaxClients; i++) {
         if (!IsValidClient(i)) continue;
         if (!IsPlayerSurvivor(i)) continue;
-        if (!IsPlayerAlive(i)) continue;
 
         Player player = new Player(i);
-        if (RewardPoints(player, "killed_tank")) {
-          NyxPrintToChat(i, "%t", "Killed Tank", player.Reward, victim);
+        player.BurnedTank = false;
+
+        if (IsPlayerAlive(i)) {
+          if (RewardPoints(player, "killed_tank")) {
+            NyxPrintToChat(i, "%t", "Killed Tank", player.Reward, victim);
+          }
         }
       }
 
@@ -358,13 +361,15 @@ public Action Event_TankKilled(Event event, const char[] name, bool dontBroadcas
     for (int i = 1; i <= MaxClients; i++) {
       if (!IsValidClient(i)) continue;
       if (!IsPlayerSurvivor(i)) continue;
-      if (!IsPlayerAlive(i)) continue;
 
       Player player = new Player(i);
-      if (RewardPoints(player, "killed_tank")) {
-        NyxPrintToChat(i, "%t", "Killed Tank", player.Reward, victim);
-      }
       player.BurnedTank = false;
+
+      if (IsPlayerAlive(i)) {
+        if (RewardPoints(player, "killed_tank")) {
+          NyxPrintToChat(i, "%t", "Killed Tank", player.Reward, victim);
+        }
+      }
     }
   }
 
@@ -387,6 +392,14 @@ public Action Event_WitchKilled(Event event, const char[] name, bool dontBroadca
     if (RewardPoints(player, "killed_witch")) {
       NyxPrintToChat(attacker, "%t", "Killed Witch", player.Reward);
     }
+  }
+
+  for (int i = 1; i <= MaxClients; i++) {
+    if (!IsValidClient(i)) continue;
+    if (!IsPlayerSurvivor(i)) continue;
+
+    Player player = new Player(i);
+    player.BurnedWitch = false;
   }
 
   return Plugin_Continue;
@@ -555,9 +568,9 @@ public Action Event_ZombieIgnited(Event event, const char[] name, bool dontBroad
   int client = GetClientOfUserId(event.GetInt("userid"));
 
   char victimname[16];
-  event.GetString("userid", victimname, sizeof(victimname));
+  event.GetString("victimname", victimname, sizeof(victimname));
 
-  if (IsValidClient(client)) return Plugin_Continue;
+  if (!IsValidClient(client)) return Plugin_Continue;
   if (IsPlayerSurvivor(client)) {
     Player player = new Player(client);
 
