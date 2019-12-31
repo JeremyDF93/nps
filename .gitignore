@@ -3,6 +3,7 @@
 *.tar.gz
 .vscode
 *.code-workspace
+build
 
 extensions/left4downtown.autoload
 extensions/left4downtown.ext.2.l4d2.dll
