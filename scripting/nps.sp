@@ -95,11 +95,13 @@ public void OnPluginStart() {
 
   // Console Commands
   RegConsoleCmd("sm_buy", ConCmd_Buy);
+  RegConsoleCmd("sm_rebuy", ConCmd_BuyAgain);
+  RegConsoleCmd("sm_givepoints", ConCmd_GivePoints);
   RegConsoleCmd("sm_gp", ConCmd_GivePoints);
   RegConsoleCmd("sm_points", ConCmd_ShowPoints);
+  RegConsoleCmd("sm_sp", ConCmd_ShowPoints);
   RegConsoleCmd("sm_tp", ConCmd_ShowTeamPoints);
   RegConsoleCmd("sm_heal", ConCmd_Heal);
-  RegConsoleCmd("sm_rebuy", ConCmd_BuyAgain);
 
   // Admin commands
   RegAdminCmd("sm_setpoints", AdmCmd_SetPoints, ADMFLAG_ROOT, "Usage: sm_setpoints <#userid|name> <points>");
