@@ -137,13 +137,13 @@
   }
   "Killed Witch"
   {
-    "#format"   "{1:i},{2:N}"
-    "en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default}."
+    "#format"   "{1:i}"
+    "en"        "{olive}+{1}{default} points awarded for killing {lightgreen}Witch{default}."
   }
   "Killed Witch Oneshot"
   {
-    "#format"   "{1:i},{2:N}"
-    "en"        "{olive}+{1}{default} points awarded for killing {lightgreen}{2}{default} in one shot."
+    "#format"   "{1:i}"
+    "en"        "{olive}+{1}{default} points awarded for killing {lightgreen}Witch{default} in one shot."
   }
   "Choke Player"
   {
