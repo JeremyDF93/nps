@@ -102,7 +102,7 @@ public void OnPluginStart() {
   RegConsoleCmd("sm_rebuy", ConCmd_BuyAgain);
 
   // Admin commands
-  RegAdminCmd("sm_setpoints", AdmCmd_SetPoints, ADMFLAG_ROOT, "nyx_givepoints <#userid|name> <points>");
+  RegAdminCmd("sm_setpoints", AdmCmd_SetPoints, ADMFLAG_ROOT, "Usage: sm_setpoints <#userid|name> <points>");
 
   // ConVars
   g_hConVars[ConVar_MaxPoints] = CreateConVar("nps_max_points", "120", "Max player points.");
