@@ -4,3 +4,13 @@
 .vscode
 *.code-workspace
 
+extensions/left4downtown.autoload
+extensions/left4downtown.ext.2.l4d2.dll
+extensions/left4downtown.ext.2.l4d2.so
+gamedata/left4downtown.l4d2.txt
+scripting/include/colors.inc
+scripting/include/l4d2director.inc
+scripting/include/l4d2timers.inc
+scripting/include/l4d2weapons.inc
+scripting/include/left4downtown.inc
+scripting/include/nps_version.inc
