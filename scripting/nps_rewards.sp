@@ -373,7 +373,6 @@ public Action Event_TankKilled(Event event, const char[] name, bool dontBroadcas
 
 public Action Event_WitchKilled(Event event, const char[] name, bool dontBroadcast) {
   int attacker = GetClientOfUserId(event.GetInt("userid"));
-  int victim = GetClientOfUserId(event.GetInt("witchid"));
   bool oneshot = event.GetBool("oneshot");
 
   if (!IsValidClient(attacker)) return Plugin_Continue;
@@ -381,12 +380,12 @@ public Action Event_WitchKilled(Event event, const char[] name, bool dontBroadca
     Player player = new Player(attacker);
     if (oneshot) {
       if (RewardPoints(player, "killed_witch_oneshot")) {
-        NyxPrintToChat(attacker, "%t", "Killed Witch Oneshot", player.Reward, victim);
+        NyxPrintToChat(attacker, "%t", "Killed Witch Oneshot", player.Reward);
       }
     }
 
     if (RewardPoints(player, "killed_witch")) {
-      NyxPrintToChat(attacker, "%t", "Killed Witch", player.Reward, victim);
+      NyxPrintToChat(attacker, "%t", "Killed Witch", player.Reward);
     }
   }
 
