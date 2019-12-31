@@ -85,7 +85,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart() {
   LoadTranslations("common.phrases");
-  LoadTranslations("nyx_pointsystem.phrases");
+  LoadTranslations("nps_core.phrases");
 
   g_hConVars[ConVar_KillStreak] = CreateConVar("nps_killstreak", "25", "Number of infected required to kill in order to get a killstreak.");
   g_hConVars[ConVar_HeadshotStreak] = CreateConVar("nps_headshot_streak", "20", "Number of infected headshots required in order to get a headshot killstreak.");

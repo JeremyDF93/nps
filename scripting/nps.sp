@@ -91,7 +91,7 @@ public void OnPluginStart() {
   NyxMsgDebug("OnPluginStart");
 
   LoadTranslations("common.phrases");
-  LoadTranslations("nyx_pointsystem.phrases");
+  LoadTranslations("nps_core.phrases");
 
   // Console Commands
   RegConsoleCmd("sm_buy", ConCmd_Buy);
