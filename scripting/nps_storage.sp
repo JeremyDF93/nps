@@ -39,6 +39,11 @@ enum ePlayer {
   bool:Player_BurnedTank
 }
 
+enum eConVar {
+  ConVar:ConVar_MaxPoints,
+  ConVar:ConVar_StartPoints
+}
+
 /***
  *       ________      __          __    
  *      / ____/ /___  / /_  ____ _/ /____
@@ -48,7 +53,18 @@ enum ePlayer {
  *                                       
  */
 
- any g_aPlayer[MAXPLAYERS + 1][ePlayer];
+any g_aPlayer[MAXPLAYERS + 1][ePlayer];
+
+ /***
+ *       ______          _    __               
+ *      / ____/___  ____| |  / /___ ___________
+ *     / /   / __ \/ __ \ | / / __ `/ ___/ ___/
+ *    / /___/ /_/ / / / / |/ / /_/ / /  (__  ) 
+ *    \____/\____/_/ /_/|___/\__,_/_/  /____/  
+ *                                             
+ */
+
+ConVar g_hConVars[eConVar];
 
 /***
  *        ____  __            _          ____      __            ____              
@@ -66,15 +82,40 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
   CreateNative("Player.UserID.set", Native_UserIDSet);
   CreateNative("Player.Points.get", Native_PointsGet);
   CreateNative("Player.Points.set", Native_PointsSet);
+  CreateNative("Player.GivePoints", Native_GivePoints);
   CreateNative("Player.Reward.get", Native_RewardGet);
   CreateNative("Player.Reward.set", Native_RewardSet);
+  CreateNative("Player.GetLastItem", Native_GetLastItem);
+  CreateNative("Player.SetLastItem", Native_SetLastItem);
+  CreateNative("Player.SetDefaults", Native_SetDefaults);
+  CreateNative("Player.HeadshotCount.get", Native_HeadshotCountGet);
+  CreateNative("Player.HeadshotCount.set", Native_HeadshotCountSet);
+  CreateNative("Player.KillCount.get", Native_KillCountGet);
+  CreateNative("Player.KillCount.set", Native_KillCountSet);
+  CreateNative("Player.HurtCount.get", Native_HurtCountGet);
+  CreateNative("Player.HurtCount.set", Native_HurtCountSet);
+  CreateNative("Player.HealCount.get", Native_HealCountGet);
+  CreateNative("Player.HealCount.set", Native_HealCountSet);
+  CreateNative("Player.TransferHealCount", Native_TransferHealCount);
+  CreateNative("Player.ProtectCount.get", Native_ProtectCountGet);
+  CreateNative("Player.ProtectCount.set", Native_ProtectCountSet);
+  CreateNative("Player.BurnedWitch.get", Native_BurnedWitchGet);
+  CreateNative("Player.BurnedWitch.set", Native_BurnedWitchSet);
+  CreateNative("Player.BurnedTank.get", Native_BurnedTankGet);
+  CreateNative("Player.BurnedTank.set", Native_BurnedTankSet);
 
   return APLRes_Success;
 }
 
 public void OnPluginStart() {
-  Player player = new Player(1);
-  player.Points = 100;
+
+}
+
+public void OnAllPluginsLoaded() {
+  if (LibraryExists("nps")) {
+    g_hConVars[ConVar_MaxPoints] = FindConVar("nps_max_points");
+    g_hConVars[ConVar_StartPoints] = FindConVar("nps_start_points");
+  }
 }
 
 /***
@@ -108,6 +149,28 @@ public int Native_PointsSet(Handle plugin, int numArgs) {
   return g_aPlayer[client][Player_Points] = value;
 }
 
+public int Native_GivePoints(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  int amount = GetNativeCell(2);
+  int limit = g_hConVars[ConVar_MaxPoints].IntValue;
+  int total = g_aPlayer[client][Player_Points] + amount;
+
+  if (total > limit) {
+    int min = MathMin(amount, total - limit);
+    int max = MathMax(amount, total - limit);
+    int spent = max - min;
+
+    if (spent >= amount) return 0;
+    if (spent >= limit) return 0;
+
+    g_aPlayer[client][Player_Points] += spent;
+    return spent;
+  }
+
+  g_aPlayer[client][Player_Points] += amount;
+  return amount;
+}
+
 public int Native_RewardGet(Handle plugin, int numArgs) {
   int client = EntRefToEntIndex(GetNativeCell(1));
   return g_aPlayer[client][Player_Reward];
@@ -119,6 +182,114 @@ public int Native_RewardSet(Handle plugin, int numArgs) {
   return g_aPlayer[client][Player_Reward] = value;
 }
 
+public int Native_GetLastItem(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  return SetNativeString(2, g_aPlayer[client][Player_LastItem], GetNativeCell(3));
+}
+
+public int Native_SetLastItem(Handle plugin, int numArgs) {
+  int len; GetNativeStringLength(2, len);
+  char[] buffer = new char[len + 1];
+  GetNativeString(2, buffer, len + 1);
+
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  strcopy(g_aPlayer[client][Player_LastItem], 64, buffer);
+  return 1;
+}
+
+public int Native_SetDefaults(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  int userid = GetNativeCell(2);
+  SetPlayerDefaults(client, userid);
+  return 1;
+}
+
+public int Native_HeadshotCountGet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  return g_aPlayer[client][Player_HeadshotCount];
+}
+
+public int Native_HeadshotCountSet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  int value = GetNativeCell(2);
+  return g_aPlayer[client][Player_HeadshotCount] = value;
+}
+
+public int Native_KillCountGet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  return g_aPlayer[client][Player_KillCount];
+}
+
+public int Native_KillCountSet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  int value = GetNativeCell(2);
+  return g_aPlayer[client][Player_KillCount] = value;
+}
+
+public int Native_HurtCountGet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  return g_aPlayer[client][Player_HurtCount];
+}
+
+public int Native_HurtCountSet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  int value = GetNativeCell(2);
+  return g_aPlayer[client][Player_HurtCount] = value;
+}
+
+public int Native_HealCountGet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  return g_aPlayer[client][Player_HealCount];
+}
+
+public int Native_HealCountSet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  int value = GetNativeCell(2);
+  return g_aPlayer[client][Player_HealCount] = value;
+}
+
+public int Native_TransferHealCount(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  Player player = view_as<Player>(GetNativeCell(2));
+
+  player.HealCount = g_aPlayer[client][Player_HealCount];
+  g_aPlayer[client][Player_HealCount] = 0;
+  return 1;
+}
+
+public int Native_ProtectCountGet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  return g_aPlayer[client][Player_ProtectCount];
+}
+
+public int Native_ProtectCountSet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  int value = GetNativeCell(2);
+  return g_aPlayer[client][Player_ProtectCount] = value;
+}
+
+public int Native_BurnedWitchGet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  return g_aPlayer[client][Player_BurnedWitch];
+}
+
+public int Native_BurnedWitchSet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  int value = GetNativeCell(2);
+  return g_aPlayer[client][Player_BurnedWitch] = view_as<bool>(value);
+}
+
+public int Native_BurnedTankGet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  return g_aPlayer[client][Player_BurnedTank];
+}
+
+public int Native_BurnedTankSet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  int value = GetNativeCell(2);
+  return g_aPlayer[client][Player_BurnedTank] = view_as<bool>(value);
+}
+
 /***
  *        ______                 __  _                 
  *       / ____/_  ______  _____/ /_(_)___  ____  _____
@@ -128,15 +299,16 @@ public int Native_RewardSet(Handle plugin, int numArgs) {
  *                                                     
  */
 
-void SetPlayerDefaults(int client) {
-  g_aPlayerStorage[client][Player_Points] = g_hConVars[ConVar_StartPoints].IntValue;
-  g_aPlayerStorage[client][Player_Reward] = 0;
-  g_aPlayerStorage[client][Player_Headshots] = 0;
-  g_aPlayerStorage[client][Player_Kills] = 0;
-  g_aPlayerStorage[client][Player_HurtCount] = 0;
-  g_aPlayerStorage[client][Player_BurnedWitch] = false;
-  g_aPlayerStorage[client][Player_BurnedTank] = false;
-  g_aPlayerStorage[client][Player_ProtectCount] = 0;
-  g_aPlayerStorage[client][Player_HealCount] = 0;
+void SetPlayerDefaults(int client, int userid=-1) {
+  g_aPlayer[client][Player_UserID] = userid;
+  g_aPlayer[client][Player_Points] = g_hConVars[ConVar_StartPoints].IntValue;
+  g_aPlayer[client][Player_Reward] = 0;
+  g_aPlayer[client][Player_HeadshotCount] = 0;
+  g_aPlayer[client][Player_KillCount] = 0;
+  g_aPlayer[client][Player_HurtCount] = 0;
+  g_aPlayer[client][Player_BurnedWitch] = false;
+  g_aPlayer[client][Player_BurnedTank] = false;
+  g_aPlayer[client][Player_ProtectCount] = 0;
+  g_aPlayer[client][Player_HealCount] = 0;
 }
  

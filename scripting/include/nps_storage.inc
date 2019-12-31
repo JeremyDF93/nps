@@ -52,31 +52,14 @@ methodmap Player __nullable__ {
     public native set(int value);
   }
 
-  public int GivePoints(int amount, int limit) {
-    int total = this.Points + amount;
-
-    if (total > limit) {
-      int min = MathMin(amount, total - limit);
-      int max = MathMax(amount, total - limit);
-      int spent = max - min;
-
-      if (spent >= amount) return 0;
-      if (spent >= limit) return 0;
-
-      this.Points = this.Points + spent;
-      return spent;
-    }
-
-    this.Points = this.Points + amount;
-    return amount;
-  }
+  public native int GivePoints(int amount);
 
   property int Reward {
     public native get();
     public native set(int value);
   }
 
-  public native void GetLastItem(char[] buffer, int maxLength);
+  public native void GetLastItem(char[] buffer, int maxlength);
 
   public native void SetLastItem(char[] buffer);
 
@@ -102,10 +85,7 @@ methodmap Player __nullable__ {
     public native set(int value);
   }
 
-  public void TransferHealCount(Player player) {
-    player.HealCount = this.HealCount;
-    this.HealCount = 0;
-  }
+  public native void TransferHealCount(Player player);
 
   property int ProtectCount {
     public native get();

@@ -67,7 +67,7 @@ bool g_bMaxPointsWarning[MAXPLAYERS + 1];
  *                                             
  */
 
- ConVar g_hConVars[NyxConVar];
+ConVar g_hConVars[NyxConVar];
 
 /***
  *        ____  __            _          ____      __            ____              
@@ -78,11 +78,15 @@ bool g_bMaxPointsWarning[MAXPLAYERS + 1];
  *                  /____/                                                         
  */
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
+  RegPluginLibrary("nps_rewards");
+  return APLRes_Success;
+}
+
 public void OnPluginStart() {
   LoadTranslations("common.phrases");
   LoadTranslations("nyx_pointsystem.phrases");
 
-  g_hConVars[ConVar_MaxPoints] = CreateConVar("nps_max_points", "120", "Max player points.");
   g_hConVars[ConVar_KillStreak] = CreateConVar("nps_killstreak", "25", "Number of infected required to kill in order to get a killstreak.");
   g_hConVars[ConVar_HeadshotStreak] = CreateConVar("nps_headshot_streak", "20", "Number of infected headshots required in order to get a headshot killstreak.");
 
@@ -128,6 +132,12 @@ public void OnPluginStart() {
     g_hConfig.Rewind();
   } else {
     SetFailState("Error in %s: File not found, corrupt or in the wrong format", path);
+  }
+}
+
+public void OnAllPluginsLoaded() {
+  if (LibraryExists("nps")) {
+    g_hConVars[ConVar_MaxPoints] = FindConVar("nps_max_points");
   }
 }
 
@@ -618,7 +628,7 @@ bool RewardPoints(Player player, const char[] reward, const char[] type="reward"
       return false;
     }
 
-    int given = player.GivePoints(points, g_hConVars[ConVar_MaxPoints].IntValue);
+    int given = player.GivePoints(points);
     player.Reward = given;
 
     if (given == 0) {

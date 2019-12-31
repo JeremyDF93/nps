@@ -127,7 +127,9 @@ public int MenuHandler_MainMenu(Menu menu, MenuAction action, int param1, int pa
         Display_SubMenu(param1, key);
       }
     } else {
-      FakeClientCommandEx(param1, "sm_buy %s", key);
+      if (IsValidClient(param1)) {
+        FakeClientCommandEx(param1, "sm_buy %s", key);
+      }
     }
   }
 
@@ -166,7 +168,9 @@ public int MenuHandler_SubMenu(Menu menu, MenuAction action, int param1, int par
         Display_SubMenu(param1, key);
       }
     } else {
-      FakeClientCommandEx(param1, "sm_buy %s", key);
+      if (IsValidClient(param1)) {
+        FakeClientCommandEx(param1, "sm_buy %s", key);
+      }
     }
   }
 

@@ -53,7 +53,7 @@ enum NyxConVar {
  *                                             
  */
 
- ConVar g_hConVars[NyxConVar];
+ConVar g_hConVars[NyxConVar];
 
 /***
  *       ________      __          __    
@@ -82,6 +82,11 @@ int g_iStartTimePassed;
  *                  /____/                                                         
  */
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
+  RegPluginLibrary("nps");
+  return APLRes_Success;
+}
+
 public void OnPluginStart() {
   NyxMsgDebug("OnPluginStart");
 
@@ -100,6 +105,7 @@ public void OnPluginStart() {
   RegAdminCmd("sm_setpoints", AdmCmd_SetPoints, ADMFLAG_ROOT, "nyx_givepoints <#userid|name> <points>");
 
   // ConVars
+  g_hConVars[ConVar_MaxPoints] = CreateConVar("nps_max_points", "120", "Max player points.");
   g_hConVars[ConVar_StartPoints] = CreateConVar("nps_start_points", "10", "Starting player points.");
   g_hConVars[ConVar_TankHealLimit] = CreateConVar("nps_tank_heal_limit", "3", "Maximum number of times the tank can heal in a life.");
   g_hConVars[ConVar_TankDelay] = CreateConVar("nps_tank_start_delay", "90", "Time (in seconds) to delay tank spawning after survivors leave the safe area.");
@@ -115,6 +121,8 @@ public void OnMapStart() {
   GetCurrentMap(map, sizeof(map));
   if (StrContains(map, "m1_") != -1) {
     for (int i = 1; i <= MaxClients; i++) {
+      if (!IsValidClient(i)) continue;
+
       Player player = new Player(i);
       player.SetDefaults();
     }
@@ -228,7 +236,7 @@ public Action AdmCmd_SetPoints(int client, int args) {
 
   int points = GetCmdIntEx(2, 0, _, 120);
   for (int i = 0; i < target_count; i++) {
-    Player player = new Player(i);
+    Player player = new Player(target_list[i]);
     player.Points = points;
     LogAction(client, target_list[i], "\"%L\" gave \"%i\" points to \"%L\"", client, points, target_list[i]);
   }
@@ -334,7 +342,7 @@ public Action ConCmd_GivePoints(int client, int args) {
       amount = points;
     }
 
-    int spent = (new Player(target)).GivePoints(amount, g_hConVars[ConVar_MaxPoints].IntValue);
+    int spent = (new Player(target)).GivePoints(amount);
     if (spent == 0) {
       NyxPrintToChat(client, "%t", "Sent Zero Points");
       return Plugin_Handled;
@@ -554,7 +562,7 @@ public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int 
       if (player.Points < amount) {
         NyxPrintToChat(param1, "%t", "Insufficient Points", amount);
       } else {
-        int spent = (new Player(target)).GivePoints(amount, g_hConVars[ConVar_MaxPoints].IntValue);
+        int spent = (new Player(target)).GivePoints(amount);
         player.Points -= spent;
         
         NyxPrintToTeam(GetClientTeam(param1), "%t", "Sent Points", param1, spent, target);
@@ -695,11 +703,12 @@ bool CanBuy(int client, any[eCatalog] storage) {
 void BuyItem(int buyer, int receiver, any[eCatalog] storage) {
   Player player = new Player(buyer);
 
-  char command_args[256];
-  Format(command_args, sizeof(command_args), "%s %s", storage[Catalog_Category], storage[Catalog_CommandArgs]);
-  FakeClientCommandCheat(receiver, storage[Catalog_Command], command_args);
+  if (strlen(storage[Catalog_CommandArgs]) == 0) {
+    strcopy(storage[Catalog_CommandArgs], sizeof(storage[Catalog_CommandArgs]), storage[Catalog_Item]);
+  }
+  FakeClientCommandCheat(receiver, "%s %s", storage[Catalog_Command], storage[Catalog_CommandArgs]);
   player.Points -= storage[Catalog_Cost];
-  player.SetLastItem(storage[Catalog_Category]);
+  player.SetLastItem(storage[Catalog_Item]);
 
   if (StrEqual(storage[Catalog_Category], "infected", false)) {
     if (storage[Catalog_Announce]) {
