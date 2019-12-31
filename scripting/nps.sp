@@ -627,7 +627,7 @@ bool CanBuy(int client, any[eCatalog] storage) {
     }
 
     return false;
-  } else if (!StrEqual(storage[Catalog_Team], "both", false)) {
+  } else if (strlen(storage[Catalog_Team]) != 0) {
     if (GetClientTeam(client) != L4D2_StringToTeam(storage[Catalog_Team])) {
       NyxPrintToChat(client, "%t", "Item Wrong Team");
       return false;
