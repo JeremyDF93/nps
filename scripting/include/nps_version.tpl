@@ -3,4 +3,4 @@
 #endif
 #define _nps_version_included
 
-#define NYX_PLUGIN_VERSION \"${MAJOR}.${MINOR}.${REVISION}-${BUILD_STRING}\"
+#define NPS_VERSION \"${MAJOR}.${MINOR}.${REVISION}-${BUILD_STRING}\"

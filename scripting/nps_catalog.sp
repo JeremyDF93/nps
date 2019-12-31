@@ -4,6 +4,7 @@
 #define NYX_DEBUG 1
 #define NYX_PLUGIN_TAG "PS"
 #include <nyxtools>
+#include <nps_stocks>
 #include <nps_catalog>
 
 #pragma newdecls required
@@ -12,7 +13,7 @@ public Plugin myinfo = {
   name = "NPS - Catalog",
   author = NYX_PLUGIN_AUTHOR,
   description = "",
-  version = NYX_PLUGIN_VERSION,
+  version = NPS_VERSION,
   url = NYX_PLUGIN_WEBSITE
 };
 

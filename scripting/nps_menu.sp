@@ -6,6 +6,7 @@
 #include <nyxtools>
 #undef REQUIRE_PLUGIN
 #include <nyxtools_l4d2>
+#include <nps_stocks>
 #include <nps_catalog>
 #include <nps_storage>
 
@@ -15,7 +16,7 @@ public Plugin myinfo = {
   name = "NPS - Menu",
   author = NYX_PLUGIN_AUTHOR,
   description = "",
-  version = NYX_PLUGIN_VERSION,
+  version = NPS_VERSION,
   url = NYX_PLUGIN_WEBSITE
 };
 

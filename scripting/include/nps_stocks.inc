@@ -3,6 +3,8 @@
 #endif
 #define _nps_stocks_included
 
+#include <nps_version>
+
 /***
  *       _____ __             __       
  *      / ___// /_____  _____/ /_______

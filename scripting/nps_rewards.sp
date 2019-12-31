@@ -18,7 +18,7 @@ public Plugin myinfo = {
   name = "NPS - Rewards",
   author = NYX_PLUGIN_AUTHOR,
   description = "",
-  version = NYX_PLUGIN_VERSION,
+  version = NPS_VERSION,
   url = NYX_PLUGIN_WEBSITE
 };
 
