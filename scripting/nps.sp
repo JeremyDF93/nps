@@ -600,11 +600,11 @@ bool CanBuy(int client, any[eCatalog] storage) {
       return false;
     }
   } else if (storage[Catalog_Limit] > 0) {
-    if (g_iSpawnCount[L4D2_StringToClass(storage[Catalog_Category])] >= storage[Catalog_Limit]) {
+    if (g_iSpawnCount[L4D2_StringToClass(storage[Catalog_Item])] >= storage[Catalog_Limit]) {
       NyxPrintToChat(client, "%t", "Spawn Limit Reached", storage[Catalog_Name]);
       return false;
     }
-  } else if (StrEqual(storage[Catalog_Category], "health", false)) {
+  } else if (StrEqual(storage[Catalog_Item], "health", false)) {
     if (IsPlayerGrabbed(client)) {
       if (L4D2_GetClientTeam(client) == L4D2Team_Survivor) {
         NyxPrintToChat(client, "%t", "Must Not Be Grabbed");
@@ -633,7 +633,7 @@ bool CanBuy(int client, any[eCatalog] storage) {
             g_hConVars[ConVar_TankHealLimit].IntValue);
       }
     }
-  } else if (StrEqual(storage[Catalog_Category], "tank", false)) {
+  } else if (StrEqual(storage[Catalog_Item], "tank", false)) {
     if (g_bFinal && !g_hConVars[ConVar_TankAllowedFinal].BoolValue) {
       NyxPrintToChat(client, "%t", "Tank Not Allowed in Final");
       return false;
@@ -672,13 +672,13 @@ void BuyItem(int buyer, int receiver, any[eCatalog] storage) {
       NyxPrintToAll("%t", "Announce Special Infected Purchase", buyer, storage[Catalog_Name]);
     }
 
-    L4D2ClassType class = L4D2_StringToClass(storage[Catalog_Category]);
+    L4D2ClassType class = L4D2_StringToClass(storage[Catalog_Item]);
     if (class != L4D2Class_Unknown) {
       g_iSpawnCount[class]++;
     }
   }
   
-  if (StrEqual(storage[Catalog_Category], "health", false)) {
+  if (StrEqual(storage[Catalog_Item], "health", false)) {
     player.HealCount++;
   }
 }
