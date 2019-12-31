@@ -148,9 +148,10 @@ public Action AdmCmd_DebugCatalog(int client, int args) {
         item[Catalog_Command],
         item[Catalog_CommandArgs],
         item[Catalog_Team]);
-    NyxMsgReply(client, "Limit: %i, Announce: %i",
+    NyxMsgReply(client, "Limit: %i, Announce: %i, AnnouncePhrase: %s",
         item[Catalog_Limit],
-        item[Catalog_Announce]);
+        item[Catalog_Announce],
+        item[Catalog_AnnouncePhrase]);
   } else {
     NyxMsgReply(client, "'%s' was not found", name);
   }
@@ -172,7 +173,9 @@ void BuildItem(KeyValues kv, any[eCatalog] item) {
   kv.GetString("command", item[Catalog_Command], sizeof(item[Catalog_Command]), item[Catalog_Command]);
   kv.GetString("command_args", item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]), item[Catalog_CommandArgs]);
   kv.GetString("team", item[Catalog_Team], sizeof(item[Catalog_Team]), item[Catalog_Team]);
+  kv.GetString("announce_phrase", item[Catalog_AnnouncePhrase], sizeof(item[Catalog_AnnouncePhrase]), item[Catalog_AnnouncePhrase]);
   item[Catalog_Cost] = kv.GetNum("cost", item[Catalog_Cost]);
   item[Catalog_Limit] = kv.GetNum("limit", item[Catalog_Limit]);
   item[Catalog_Announce] = (kv.GetNum("announce", item[Catalog_Announce]) == 1);
+  item[Catalog_MustBeIncapacitated] = (kv.GetNum("must_be_incapacitated", item[Catalog_MustBeIncapacitated]) == 1);
 }
