@@ -6,6 +6,8 @@
 #include <nyxtools>
 #undef REQUIRE_PLUGIN
 #include <nyxtools_l4d2>
+#include <nps_catalog>
+#include <nps_storage>
 
 #pragma newdecls required
 
@@ -96,10 +98,10 @@ public Action ConCmd_BuyMenu(int client, int args) {
  */
 
 void Display_MainMenu(int client) {
-  Menu menu = new Menu(MenuHandler_MainMenu);
+  Menu menu = new Menu(MenuHandler_SubMenu);
   
   char title[32];
-  Format(title, sizeof(title), "Points: %d", -1); // TODO: get points
+  Format(title, sizeof(title), "Points: %d", (new Player(client)).Points);
   menu.SetTitle(title);
 
   BuildMainMenu(client, menu);
@@ -108,39 +110,11 @@ void Display_MainMenu(int client) {
   menu.Display(client, MENU_TIME_FOREVER);
 }
 
-public int MenuHandler_MainMenu(Menu menu, MenuAction action, int param1, int param2) {
-  if (action == MenuAction_End) {
-    delete menu;
-  } else if (action == MenuAction_Cancel) {
-    if (param2 == MenuCancel_ExitBack) {
-      if (IsValidClient(param1)) {
-        Display_MainMenu(param1);
-      }
-    }
-
-    return;
-  } else if (action == MenuAction_Select) {
-    char key[32];
-    menu.GetItem(param2, key, sizeof(key));
-    if (StrContains(key, "_menu", false) != -1) {
-      if (IsValidClient(param1)) {
-        Display_SubMenu(param1, key);
-      }
-    } else {
-      if (IsValidClient(param1)) {
-        FakeClientCommandEx(param1, "sm_buy %s", key);
-      }
-    }
-  }
-
-  return;
-}
-
 void Display_SubMenu(int client, const char[] key) {
   Menu menu = new Menu(MenuHandler_SubMenu);
   
   char title[32];
-  Format(title, sizeof(title), "Points: %d", -1); // TODO: get points
+  Format(title, sizeof(title), "Points: %d", (new Player(client)).Points);
   menu.SetTitle(title);
 
   BuildSubMenu(menu, key);
@@ -169,6 +143,45 @@ public int MenuHandler_SubMenu(Menu menu, MenuAction action, int param1, int par
       }
     } else {
       if (IsValidClient(param1)) {
+        Display_ConfirmMenu(param1, key);
+      }
+    }
+  }
+
+  return;
+}
+
+void Display_ConfirmMenu(int client, const char[] key) {
+  Menu menu = new Menu(MenuHandler_ConfirmMenu);
+  
+  char title[32];
+  any storage[eCatalog]; FindItem(key, storage);
+  Format(title, sizeof(title), "Cost: %i", storage[Catalog_Cost]);
+  menu.SetTitle(title);
+
+  menu.AddItem(key, "Yes");
+  menu.AddItem("no", "No");
+  menu.ExitBackButton = true;
+  menu.Display(client, MENU_TIME_FOREVER);
+}
+
+public int MenuHandler_ConfirmMenu(Menu menu, MenuAction action, int param1, int param2) {
+  if (action == MenuAction_End) {
+    delete menu;
+  } else if (action == MenuAction_Cancel) {
+    if (param2 == MenuCancel_ExitBack) {
+      if (IsValidClient(param1)) {
+        Display_MainMenu(param1);
+      }
+    }
+
+    return;
+  } else if (action == MenuAction_Select) {
+    char key[32];
+    menu.GetItem(param2, key, sizeof(key));
+
+    if (IsValidClient(param1)) {
+      if (!StrEqual(key, "no", false)) {
         FakeClientCommandEx(param1, "sm_buy %s", key);
       }
     }

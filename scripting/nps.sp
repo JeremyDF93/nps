@@ -429,81 +429,12 @@ public Action ConCmd_BuyAgain(int client, int args) {
  *                                    
  */
 
-void Display_ConfirmMenu(int client, const char[] info) {
-  Menu menu = new Menu(MenuHandler_ConfirmMenu);
-  
-  char title[32];
-  any storage[eCatalog]; GetItemData(info, storage);
-  Format(title, sizeof(title), "Cost: %i", storage[Catalog_Cost]);
-  menu.SetTitle(title);
-
-  menu.AddItem(info, "Yes");
-  menu.AddItem("no", "No");
-  menu.ExitBackButton = true;
-  menu.Display(client, MENU_TIME_FOREVER);
-}
-
 void Display_GivePointsMenu(int client) {
   Menu menu = new Menu(MenuHandler_GivePoints);
   menu.SetTitle("Select Target");
   menu.ExitBackButton = true;
   AddTeamToMenu(menu, client);
   menu.Display(client, MENU_TIME_FOREVER);
-}
-
-void Display_GiveAmountMenu(int client) {
-  Menu menu = new Menu(MenuHandler_GiveAmount);
-  menu.SetTitle("Select Amount");
-  menu.ExitBackButton = true;
-
-  Player player = new Player(client);
-  int points = player.Points;
-
-  if (points >= 10) menu.AddItem("10", "10 Points");
-  if (points >= 20) menu.AddItem("20", "20 Points");
-  if (points >= 30) menu.AddItem("30", "30 Points");
-
-  char info[16], display[64];
-  IntToString(points / 2, info, sizeof(info));
-  Format(display, sizeof(display), "%d Points (half)", points / 2);
-  menu.AddItem(info, display);
-
-  IntToString(points, info, sizeof(info));
-  Format(display, sizeof(display), "%d Points (all)", points);
-  menu.AddItem(info, display);
-
-  menu.Display(client, MENU_TIME_FOREVER);
-}
-
-public int MenuHandler_ConfirmMenu(Menu menu, MenuAction action, int param1, int param2) {
-  if (action == MenuAction_End) {
-    delete menu;
-  } else if (action == MenuAction_Cancel) {
-    if (param2 == MenuCancel_ExitBack) {
-      if (IsValidClient(param1)) {
-        //Display_MainMenu(param1);
-      }
-    }
-
-    return;
-  } else if (action == MenuAction_Select) {
-    char info[32];
-    menu.GetItem(param2, info, sizeof(info));
-
-    if (IsValidClient(param1) && !StrEqual(info, "no", false)) {
-      any storage[eCatalog];
-      if (!FindItem(info, storage)) {
-        NyxPrintToChat(param1, "%t", "Item Doesn't Exist", info);
-        return;
-      }
-
-      if (CanBuy(param1, storage)) {
-        BuyItem(param1, param1, storage);
-      }
-    }
-  }
-
-  return;
 }
 
 public int MenuHandler_GivePoints(Menu menu, MenuAction action, int param1, int param2) {
@@ -536,6 +467,30 @@ public int MenuHandler_GivePoints(Menu menu, MenuAction action, int param1, int 
   }
   
   return;
+}
+
+void Display_GiveAmountMenu(int client) {
+  Menu menu = new Menu(MenuHandler_GiveAmount);
+  menu.SetTitle("Select Amount");
+  menu.ExitBackButton = true;
+
+  Player player = new Player(client);
+  int points = player.Points;
+
+  if (points >= 10) menu.AddItem("10", "10 Points");
+  if (points >= 20) menu.AddItem("20", "20 Points");
+  if (points >= 30) menu.AddItem("30", "30 Points");
+
+  char info[16], display[64];
+  IntToString(points / 2, info, sizeof(info));
+  Format(display, sizeof(display), "%d Points (half)", points / 2);
+  menu.AddItem(info, display);
+
+  IntToString(points, info, sizeof(info));
+  Format(display, sizeof(display), "%d Points (all)", points);
+  menu.AddItem(info, display);
+
+  menu.Display(client, MENU_TIME_FOREVER);
 }
 
 public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int param2) {
