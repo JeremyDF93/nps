@@ -605,6 +605,7 @@ stock int AddTeamToMenu(Menu menu, int client) {
 bool CanBuy(int client, any[eCatalog] item) {
   Player player = new Player(client);
 
+  // do we have anough dosh?
   if (player.Points < item[Catalog_Cost]) {
     if (g_hConVars[ConVar_AnnounceNeeds].BoolValue) {
       NyxPrintToTeam(GetClientTeam(client), "%t", "Insufficient Funds Announce", 
@@ -616,30 +617,40 @@ bool CanBuy(int client, any[eCatalog] item) {
 
     return false;
   }
+
+  // is the item team restricted?
   if (strlen(item[Catalog_Team]) != 0) {
     if (GetClientTeam(client) != L4D2_StringToTeam(item[Catalog_Team])) {
       NyxPrintToChat(client, "%t", "Item Wrong Team");
       return false;
     }
   }
+
+  // do we need to be alive?
   if (!IsPlayerAlive(client)) {
     if (IsPlayerSurvivor(client)) {
       NyxPrintToChat(client, "%t", "Must Be Alive");
       return false;
     }
   }
+
+  // do we need to check if we're incapacitated?
   if (!IsPlayerIncapacitated(client) && item[Catalog_MustBeIncapacitated]) {
     if (IsPlayerSurvivor(client)) {
       NyxPrintToChat(client, "%t", "Must Be Incapacitated");
       return false;
     }
   }
+
+  // have we reached the buy limit?
   if (item[Catalog_Limit] > 0) {
     if (g_iSpawnCount[L4D2_StringToClass(item[Catalog_Item])] >= item[Catalog_Limit]) {
       NyxPrintToChat(client, "%t", "Spawn Limit Reached", item[Catalog_Name]);
       return false;
     }
   }
+
+  // do we need to run pre-heal condition checks?
   if (StrEqual(item[Catalog_Item], "health", false)) {
     if (IsPlayerGrabbed(client)) {
       if (L4D2_GetClientTeam(client) == L4D2Team_Survivor) {
@@ -653,6 +664,8 @@ bool CanBuy(int client, any[eCatalog] item) {
         return false;
       }
     }
+
+    // are we a tank?
     if (IsPlayerTank(client)) {
       // tank death loop fix
       if (GetEntProp(client, Prop_Send, "m_nSequence") >= 65) { // start of tank death animation 67-77
@@ -672,6 +685,8 @@ bool CanBuy(int client, any[eCatalog] item) {
       }
     }
   }
+
+  // are we trying to by a tank?
   if (StrEqual(item[Catalog_Item], "tank", false)) {
     if (g_bFinal && !g_hConVars[ConVar_TankAllowedFinal].BoolValue) {
       NyxPrintToChat(client, "%t", "Tank Not Allowed in Final");
