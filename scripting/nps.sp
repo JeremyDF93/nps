@@ -41,7 +41,7 @@ enum NyxConVar {
   ConVar:ConVar_TankDelay,
   ConVar:ConVar_TankAllowedFinal,
   ConVar:ConVar_AnnounceNeeds,
-  ConVar:ConVar_TopOff
+  ConVar:ConVar_Charity
 }
 
 /***
@@ -116,7 +116,7 @@ public void OnPluginStart() {
   g_hConVars[ConVar_TankDelay] = CreateConVar("nps_tank_start_delay", "90", "Time (in seconds) to delay tank spawning after survivors leave the safe area.");
   g_hConVars[ConVar_TankAllowedFinal] = CreateConVar("nps_tank_allowed_final", "0", "Tank allowed on the final map?", _, true, 0.0, true, 1.0);
   g_hConVars[ConVar_AnnounceNeeds] = CreateConVar("nps_announce_needs", "1", "Announce when a player tries to buy with insufficient funds.", _, true, 0.0, true, 1.0);
-  g_hConVars[ConVar_TopOff] = CreateConVar("nps_topoff", "1", "Top off players with less than the minimal starting points at the start of a round.", _, true, 0.0, true, 1.0);
+  g_hConVars[ConVar_Charity] = CreateConVar("nps_charity", "1", "Give players with less than the minimal starting points at the start of a roud some points?", _, true, 0.0, true, 1.0);
 }
 
 public void OnMapStart() {
@@ -222,7 +222,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
   g_iStartTime = 0;
   g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
 
-  if (g_hConVars[ConVar_TopOff].BoolValue) {
+  if (g_hConVars[ConVar_Charity].BoolValue) {
     for (int i = 1; i <= MaxClients; i++) {
       Player player = new Player(i);
       if (player.Points < g_hConVars[ConVar_StartPoints].IntValue) {
