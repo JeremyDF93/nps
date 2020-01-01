@@ -293,19 +293,22 @@ public Action ConCmd_Buy(int client, int args) {
     return Plugin_Handled;
   }
 
-  char item[32];
-  GetCmdArg(1, item, sizeof(item));
+  char search[32];
+  GetCmdArg(1, search, sizeof(search));
 
-  any storage[eCatalog];
-  if (!FindItem(item, storage)) {
-    NyxPrintToChat(client, "%t", "Item Doesn't Exist", item);
+  any item[eCatalog];
+  if (!FindItem(search, item)) {
+    NyxPrintToChat(client, "%t", "Item Doesn't Exist", search);
     return Plugin_Handled;
   }
 
-  if (!CanBuy(client, storage)) {
+  if (!CanBuy(client, item)) {
     return Plugin_Handled;
   }
 
+  BuyItem(client, client, item);
+
+/*
   if (IsPlayerInfected(client)) {
     if (IsPlayerAlive(client)) {
       int target;
@@ -335,14 +338,15 @@ public Action ConCmd_Buy(int client, int args) {
         return Plugin_Handled;
       }
 
-      BuyItem(client, target, storage);
-      NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For", client, storage[Catalog_Name], target);
+      BuyItem(client, target, item);
+      NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For", client, item[Catalog_Name], target);
     } else {
-      BuyItem(client, client, storage);
+      BuyItem(client, client, item);
     }
   } else {
-    BuyItem(client, client, storage);
+    BuyItem(client, client, item);
   }
+ */
 
   return Plugin_Handled;
 }
@@ -412,14 +416,14 @@ public Action ConCmd_ShowTeamPoints(int client, int args) {
 
 public Action ConCmd_Heal(int client, int args) {
   if (IsValidClient(client)) {
-    any storage[eCatalog];
-    if (!FindItem("heal", storage)) {
+    any item[eCatalog];
+    if (!FindItem("heal", item)) {
       NyxPrintToChat(client, "%t", "Item Doesn't Exist", "heal");
       return Plugin_Handled;
     }
 
-    if (CanBuy(client, storage)) {
-      BuyItem(client, client, storage);
+    if (CanBuy(client, item)) {
+      BuyItem(client, client, item);
     }
   }
 
@@ -435,14 +439,14 @@ public Action ConCmd_BuyAgain(int client, int args) {
       return Plugin_Handled;
     }
 
-    any storage[eCatalog];
-    if (!FindItem(buffer, storage)) {
+    any item[eCatalog];
+    if (!FindItem(buffer, item)) {
       NyxPrintToChat(client, "%t", "Item Doesn't Exist", buffer);
       return Plugin_Handled;
     }
 
-    if (CanBuy(client, storage)) {
-      BuyItem(client, client, storage);
+    if (CanBuy(client, item)) {
+      BuyItem(client, client, item);
     }
   }
 
@@ -598,51 +602,58 @@ stock int AddTeamToMenu(Menu menu, int client) {
  *                                                     
  */
 
-bool CanBuy(int client, any[eCatalog] storage) {
+bool CanBuy(int client, any[eCatalog] item) {
   Player player = new Player(client);
 
-  if (player.Points < storage[Catalog_Cost]) {
+  if (player.Points < item[Catalog_Cost]) {
     if (g_hConVars[ConVar_AnnounceNeeds].BoolValue) {
       NyxPrintToTeam(GetClientTeam(client), "%t", "Insufficient Funds Announce", 
-          client, storage[Catalog_Cost] - player.Points, storage[Catalog_Name]);
+          client, item[Catalog_Cost] - player.Points, item[Catalog_Name]);
     } else {
       NyxPrintToChat(client, "%t", "Insufficient Funds",
-          storage[Catalog_Cost] - player.Points, storage[Catalog_Name]);
+          item[Catalog_Cost] - player.Points, item[Catalog_Name]);
     }
 
     return false;
-  } else if (strlen(storage[Catalog_Team]) != 0) {
-    if (GetClientTeam(client) != L4D2_StringToTeam(storage[Catalog_Team])) {
+  }
+  if (strlen(item[Catalog_Team]) != 0) {
+    if (GetClientTeam(client) != L4D2_StringToTeam(item[Catalog_Team])) {
       NyxPrintToChat(client, "%t", "Item Wrong Team");
       return false;
     }
-  } else if (!IsPlayerAlive(client)) {
+  }
+  if (!IsPlayerAlive(client)) {
     if (IsPlayerSurvivor(client)) {
       NyxPrintToChat(client, "%t", "Must Be Alive");
       return false;
     }
-  } else if (!IsPlayerIncapacitated(client) && storage[Catalog_MustBeIncapacitated]) {
+  }
+  if (!IsPlayerIncapacitated(client) && item[Catalog_MustBeIncapacitated]) {
     if (IsPlayerSurvivor(client)) {
       NyxPrintToChat(client, "%t", "Must Be Incapacitated");
       return false;
     }
-  } else if (storage[Catalog_Limit] > 0) {
-    if (g_iSpawnCount[L4D2_StringToClass(storage[Catalog_Item])] >= storage[Catalog_Limit]) {
-      NyxPrintToChat(client, "%t", "Spawn Limit Reached", storage[Catalog_Name]);
+  }
+  if (item[Catalog_Limit] > 0) {
+    if (g_iSpawnCount[L4D2_StringToClass(item[Catalog_Item])] >= item[Catalog_Limit]) {
+      NyxPrintToChat(client, "%t", "Spawn Limit Reached", item[Catalog_Name]);
       return false;
     }
-  } else if (StrEqual(storage[Catalog_Item], "health", false)) {
+  }
+  if (StrEqual(item[Catalog_Item], "health", false)) {
     if (IsPlayerGrabbed(client)) {
       if (L4D2_GetClientTeam(client) == L4D2Team_Survivor) {
         NyxPrintToChat(client, "%t", "Must Not Be Grabbed");
         return false;
       }
-    } else if (!IsPlayerIncapacitated(client)) {
+    }
+    if (!IsPlayerIncapacitated(client)) {
       if (GetEntProp(client, Prop_Data, "m_iHealth") >= GetEntProp(client, Prop_Data, "m_iMaxHealth")) {
         NyxPrintToChat(client, "%t", "Health is Full");
         return false;
       }
-    } else if (IsPlayerTank(client)) {
+    }
+    if (IsPlayerTank(client)) {
       // tank death loop fix
       if (GetEntProp(client, Prop_Send, "m_nSequence") >= 65) { // start of tank death animation 67-77
         NyxPrintToChat(client, "%t", "Must Be Alive");
@@ -660,7 +671,8 @@ bool CanBuy(int client, any[eCatalog] storage) {
             g_hConVars[ConVar_TankHealLimit].IntValue);
       }
     }
-  } else if (StrEqual(storage[Catalog_Item], "tank", false)) {
+  }
+  if (StrEqual(item[Catalog_Item], "tank", false)) {
     if (g_bFinal && !g_hConVars[ConVar_TankAllowedFinal].BoolValue) {
       NyxPrintToChat(client, "%t", "Tank Not Allowed in Final");
       return false;
@@ -684,28 +696,28 @@ bool CanBuy(int client, any[eCatalog] storage) {
   return true;
 }
 
-void BuyItem(int buyer, int receiver, any[eCatalog] storage) {
+void BuyItem(int buyer, int receiver, any[eCatalog] item) {
   Player player = new Player(buyer);
 
-  if (strlen(storage[Catalog_CommandArgs]) == 0) {
-    strcopy(storage[Catalog_CommandArgs], sizeof(storage[Catalog_CommandArgs]), storage[Catalog_Item]);
+  if (strlen(item[Catalog_CommandArgs]) == 0) {
+    strcopy(item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]), item[Catalog_Item]);
   }
-  FakeClientCommandCheat(receiver, "%s %s", storage[Catalog_Command], storage[Catalog_CommandArgs]);
-  player.Points -= storage[Catalog_Cost];
-  player.SetLastItem(storage[Catalog_Item]);
+  FakeClientCommandCheat(receiver, "%s %s", item[Catalog_Command], item[Catalog_CommandArgs]);
+  player.Points -= item[Catalog_Cost];
+  player.SetLastItem(item[Catalog_Item]);
 
-  if (StrEqual(storage[Catalog_Category], "infected", false)) {
-    if (storage[Catalog_Announce]) {
-      NyxPrintToAll("%t", "Announce Special Infected Purchase", buyer, storage[Catalog_Name]);
+  if (StrEqual(item[Catalog_Category], "infected", false)) {
+    if (item[Catalog_Announce]) {
+      NyxPrintToAll("%t", "Announce Special Infected Purchase", buyer, item[Catalog_Name]);
     }
 
-    L4D2ClassType class = L4D2_StringToClass(storage[Catalog_Item]);
+    L4D2ClassType class = L4D2_StringToClass(item[Catalog_Item]);
     if (class != L4D2Class_Unknown) {
       g_iSpawnCount[class]++;
     }
   }
   
-  if (StrEqual(storage[Catalog_Item], "health", false)) {
+  if (StrEqual(item[Catalog_Item], "health", false)) {
     player.HealCount++;
   }
 }
