@@ -1,7 +1,6 @@
 #pragma semicolon 1
 #include <sourcemod>
 #include <clientprefs>
-#include <left4downtown>
 #include <colors>
 
 #define NYX_DEBUG 1
@@ -118,7 +117,7 @@ public void OnPluginStart() {
 }
 
 public void OnMapStart() {
-  NyxMsgDebug("OnMapStart, Final %b", L4D_IsMissionFinalMap());
+  NyxMsgDebug("OnMapStart, Final %b", L4D2_IsMissionFinalMap());
 
   char map[PLATFORM_MAX_PATH];
   GetCurrentMap(map, sizeof(map));
@@ -135,7 +134,7 @@ public void OnMapStart() {
     }
   }
 
-  g_bFinal = L4D_IsMissionFinalMap();
+  g_bFinal = L4D2_IsMissionFinalMap();
   g_iStartTime = 0;
   g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
 }
@@ -190,7 +189,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
  *                                                        
  */
 
-public Action L4D_OnFirstSurvivorLeftSafeArea(int client) {
+public Action L4D2_OnFirstSurvivorLeftSafeArea(int client) {
   if (g_hConVars[ConVar_TankDelay].IntValue == 0) {
     g_bTankAllowed = true;
   } else {
@@ -234,6 +233,17 @@ public Action L4D2_OnReplaceWithBot(int client, bool flag) {
   NyxMsgDebug("L4D2_OnReplaceWithBot(client: %N, flag: %d)", client, flag);
   return Plugin_Continue;
 }
+
+/***
+ *      _______                         
+ *     /_  __(_)___ ___  ___  __________
+ *      / / / / __ `__ \/ _ \/ ___/ ___/
+ *     / / / / / / / / /  __/ /  (__  ) 
+ *    /_/ /_/_/ /_/ /_/\___/_/  /____/  
+ *                                      
+ */
+
+
 
 /***
  *        ______                 __      
@@ -333,7 +343,6 @@ public Action ConCmd_Buy(int client, int args) {
     return Plugin_Handled;
   }
 
-
   if (IsPlayerInfected(client)) {
     L4D2ClassType itemClass = L4D2_StringToClass(item[Catalog_Item]);
     if (itemClass == L4D2Class_Witch || itemClass == L4D2Class_Survivor || itemClass == L4D2Class_Unknown) {
@@ -379,7 +388,9 @@ public Action ConCmd_Buy(int client, int args) {
       }
     } else {
       BuyItem(client, client, item, true);
-      L4D2_RespawnPlayer(client);
+      // set the m_iPlayerState before becoming a ghost - this is required
+      SetEntProp(client, Prop_Send, "m_iPlayerState", 6);
+      L4D2_BecomeGhost(client);
       L4D2_SetInfectedClass(client, itemClass);
       return Plugin_Handled;
     }

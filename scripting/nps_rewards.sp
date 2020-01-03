@@ -1,6 +1,5 @@
 #pragma semicolon 1
 #include <sourcemod>
-#include <left4downtown>
 #include <colors>
 
 #define NYX_DEBUG 1
