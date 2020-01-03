@@ -3,6 +3,7 @@
 #endif
 #define _nps_stocks_included
 
+#tryinclude <nps_version_auto>
 #include <nps_version>
 
 /***

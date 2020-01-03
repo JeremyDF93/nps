@@ -1,0 +1,64 @@
+# vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
+import os, sys
+
+def ResolveEnvPath(env, folder):
+  if env in os.environ:
+    path = os.environ[env]
+    if os.path.isdir(path):
+      return path
+    return None
+
+  head = os.getcwd()
+  oldhead = None
+  while head != None and head != oldhead:
+    path = os.path.join(head, folder)
+    if os.path.isdir(path):
+      return path
+    oldhead = head
+    head, tail = os.path.split(head)
+
+  return None
+
+def Normalize(path):
+  return os.path.abspath(os.path.normpath(path))
+
+class ExtensionConfig(object):
+  def __init__(self):
+    self.generated_headers = None
+    self.sm_bin_path = None
+    self.smx_files = {}
+
+  @property
+  def tag(self):
+    if builder.options.debug == '1':
+      return 'Debug'
+    return 'Release'
+
+  def configure(self):
+    builder.DetectCompilers()
+
+    if builder.options.sm_bin_path:
+      self.sm_bin_path = builder.options.sm_bin_path
+    else:
+      self.sm_bin_path = ResolveEnvPath('SOURCEMOD_BINS', 'sourcemod-bins')
+
+    if not self.sm_bin_path or not os.path.isdir(self.sm_bin_path):
+      raise Exception('Could not find a compiled copy of SourceMod')
+    self.sm_bin_path = Normalize(self.sm_bin_path)
+
+Extension = ExtensionConfig()
+Extension.configure()
+
+Extension.generated_headers = builder.RunScript(
+    'tools/buildbot/Versioning',
+    { 'Extension': Extension }
+  )
+
+if builder.backend == 'amb2':
+  builder.RunBuildScripts(
+    [
+      'scripting/AMBuilder',
+      'PackageScript',
+    ],
+    { 'Extension': Extension }
+  )

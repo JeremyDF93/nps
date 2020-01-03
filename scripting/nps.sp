@@ -161,7 +161,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 {
   if (!IsValidClient(client, true)) return Plugin_Continue;
 
-  if (buttons & IN_RELOAD) {
+  if (buttons & IN_USE) {
     g_iTimeCmd[client] = tickcount;
     if (g_iTimeCmd[client] > (g_iLastCmd[client] + 30)) {
       g_iLastCmd[client] = tickcount;
@@ -174,6 +174,10 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
       if (!IsPlayerIncapacitated(client)) return Plugin_Continue;
 
       FakeClientCommandEx(client, "sm_buy %s", "heal"); // I'm so laze u.u
+    } else {
+      if (!IsPlayerTank(client)) return Plugin_Continue;
+
+      FakeClientCommandEx(client, "sm_buy %s", "heal");
     }
   }
 
