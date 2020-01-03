@@ -49,10 +49,15 @@
   {
     "en"        "Unable to find a player to give that item to."
   }
-  "Bought Something For"
+  "Bought Something For Player"
   {
     "#format"   "{1:N},{2:s},{3:N}"
     "en"        "{lightgreen}{1}{default} bought {olive}{2}{default} for {lightgreen}{3}{default}."
+  }
+  "Spawned"
+  {
+    "#format"   "{1:N},{2:s}"
+    "en"        "{lightgreen}{1}{default} Spawned {olive}{2}{default}"
   }
   "Must Be Alive"
   {

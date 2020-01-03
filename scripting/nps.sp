@@ -333,6 +333,58 @@ public Action ConCmd_Buy(int client, int args) {
     return Plugin_Handled;
   }
 
+
+  if (IsPlayerInfected(client)) {
+    L4D2ClassType itemClass = L4D2_StringToClass(item[Catalog_Item]);
+    if (itemClass == L4D2Class_Witch || itemClass == L4D2Class_Survivor || itemClass == L4D2Class_Unknown) {
+      BuyItem(client, client, item);
+      return Plugin_Handled;
+    }
+
+    // we're trying to buy a controllable special infected zombie if we're down here
+    if (IsPlayerAlive(client)) {
+      if (IsPlayerGhost(client)) { // Change their class
+        BuyItem(client, client, item, true);
+        L4D2_SetInfectedClass(client, itemClass);
+        return Plugin_Handled;
+      } else {
+        int target;
+        if (args < 2) { // If there is no target arg just pick a random one
+          int playerCount, playerList[MAXPLAYERS + 1];
+          for (int i = 1; i <= MaxClients; i++) {
+            if (!IsValidClient(i, true)) continue;
+            if (!IsPlayerInfected(i)) continue;
+            if (IsPlayerAlive(i)) continue;
+            if (client == i) continue;
+
+            playerList[playerCount++] = i;
+          }
+
+          if (playerCount) { // We found a random target
+            target = playerList[GetRandomInt(0, playerCount - 1)];
+          }
+        } else {
+          target = GetCmdTarget(2, client, false, false); // get the requested target
+        }
+
+        if (!IsValidBuyTarget(target)) {
+          BuyItem(client, client, item);
+          NyxPrintToTeam(GetClientTeam(client), "%t", "Spawned", client, item[Catalog_Name]);
+          return Plugin_Handled;
+        }
+
+        BuyItem(client, target, item);
+        NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For Player", client, item[Catalog_Name], target);
+        return Plugin_Handled;
+      }
+    } else {
+      BuyItem(client, client, item, true);
+      L4D2_RespawnPlayer(client);
+      L4D2_SetInfectedClass(client, itemClass);
+      return Plugin_Handled;
+    }
+  }
+
   BuyItem(client, client, item);
 
 /*
@@ -738,13 +790,17 @@ bool CanBuy(int client, any[eCatalog] item) {
   return true;
 }
 
-void BuyItem(int buyer, int receiver, any[eCatalog] item) {
+void BuyItem(int buyer, int receiver, any[eCatalog] item, bool dontRun=false) {
   Player player = new Player(buyer);
 
   if (strlen(item[Catalog_CommandArgs]) == 0) {
     strcopy(item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]), item[Catalog_Item]);
   }
-  FakeClientCommandCheat(receiver, "%s %s", item[Catalog_Command], item[Catalog_CommandArgs]);
+
+  if (!dontRun) {
+    FakeClientCommandCheat(receiver, "%s %s", item[Catalog_Command], item[Catalog_CommandArgs]);
+  }
+
   player.Points -= item[Catalog_Cost];
   player.SetLastItem(item[Catalog_Item]);
 

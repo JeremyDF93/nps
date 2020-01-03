@@ -26,6 +26,15 @@ stock bool IsSpitterDamage(int type){
   return false;
 }
 
+stock bool IsValidBuyTarget(int target) {
+  if (!IsValidClient(target)) return false;
+  if (!IsPlayerInfected(target)) return false;
+  if (IsPlayerAlive(target)) return false;
+  if (IsPlayerGhost(target)) return false;
+
+  return true;
+}
+
 stock void NyxPrintToAll(char[] format, any ...) {
   char buffer[256];
   VFormat(buffer, sizeof(buffer), format, 2);
