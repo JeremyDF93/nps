@@ -14,10 +14,10 @@
 
 public Plugin myinfo = {
   name = "NPS - Menu",
-  author = NYX_PLUGIN_AUTHOR,
+  author = NYXTOOLS_AUTHOR,
   description = "",
   version = NPS_VERSION,
-  url = NYX_PLUGIN_WEBSITE
+  url = NYXTOOLS_WEBSITE
 };
 
 /***

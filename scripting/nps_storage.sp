@@ -11,10 +11,10 @@
 
 public Plugin myinfo = {
   name = "NPS - Storage",
-  author = NYX_PLUGIN_AUTHOR,
+  author = NYXTOOLS_AUTHOR,
   description = "",
   version = NPS_VERSION,
-  url = NYX_PLUGIN_WEBSITE
+  url = NYXTOOLS_WEBSITE
 };
 
 /***
@@ -37,7 +37,8 @@ enum ePlayer {
   Player_HealCount,
   Player_ProtectCount,
   bool:Player_BurnedWitch,
-  bool:Player_BurnedTank
+  bool:Player_BurnedTank,
+  bool:Player_WasTank
 }
 
 enum eConVar {
@@ -104,6 +105,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
   CreateNative("Player.BurnedWitch.set", Native_BurnedWitchSet);
   CreateNative("Player.BurnedTank.get", Native_BurnedTankGet);
   CreateNative("Player.BurnedTank.set", Native_BurnedTankSet);
+  CreateNative("Player.WasTank.get", Native_WasTankGet);
+  CreateNative("Player.WasTank.set", Native_WasTankSet);
 
   return APLRes_Success;
 }
@@ -291,6 +294,17 @@ public int Native_BurnedTankSet(Handle plugin, int numArgs) {
   return g_aPlayer[client][Player_BurnedTank] = view_as<bool>(value);
 }
 
+public int Native_WasTankGet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  return g_aPlayer[client][Player_WasTank];
+}
+
+public int Native_WasTankSet(Handle plugin, int numArgs) {
+  int client = EntRefToEntIndex(GetNativeCell(1));
+  int value = GetNativeCell(2);
+  return g_aPlayer[client][Player_WasTank] = view_as<bool>(value);
+}
+
 /***
  *        ______                 __  _                 
  *       / ____/_  ______  _____/ /_(_)___  ____  _____
@@ -307,9 +321,10 @@ void SetPlayerDefaults(int client, int userid=-1) {
   g_aPlayer[client][Player_HeadshotCount] = 0;
   g_aPlayer[client][Player_KillCount] = 0;
   g_aPlayer[client][Player_HurtCount] = 0;
+  g_aPlayer[client][Player_HealCount] = 0;
+  g_aPlayer[client][Player_ProtectCount] = 0;
   g_aPlayer[client][Player_BurnedWitch] = false;
   g_aPlayer[client][Player_BurnedTank] = false;
-  g_aPlayer[client][Player_ProtectCount] = 0;
-  g_aPlayer[client][Player_HealCount] = 0;
+  g_aPlayer[client][Player_WasTank] = false;
 }
  

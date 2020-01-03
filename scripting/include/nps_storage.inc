@@ -93,4 +93,9 @@ methodmap Player __nullable__ {
     public native get();
     public native set(bool value);
   }
+  
+  property bool WasTank {
+    public native get();
+    public native set(bool value);
+  }
 }

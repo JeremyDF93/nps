@@ -52,5 +52,5 @@ stock void NyxPrintToTeam(int team, char[] format, any ...) {
 stock void NyxPrintToChat(int client, char[] format, any ...) {
   char buffer[256];
   VFormat(buffer, sizeof(buffer), format, 3);
-  CPrintToChat(client, "{green}[%s]{default} %s", NYX_PLUGIN_TAG, buffer);
+  CPrintToChat(client, "{green}[%s]{default} %s", NYXTOOLS_TAG, buffer);
 }

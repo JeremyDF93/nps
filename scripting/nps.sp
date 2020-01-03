@@ -5,12 +5,10 @@
 #include <colors>
 
 #define NYX_DEBUG 1
-#define NYX_PLUGIN_TAG "PS"
+#define NYXTOOLS_TAG "PS"
 #include <nyxtools>
 #include <nyxtools_cheats>
-#undef REQUIRE_PLUGIN
 #include <nyxtools_l4d2>
-#define REQUIRE_PLUGIN
 #include <nps_stocks>
 #include <nps_catalog>
 #include <nps_storage>
@@ -19,10 +17,10 @@
 
 public Plugin myinfo = {
   name = "Nyxtools - L4D2 Point System",
-  author = NYX_PLUGIN_AUTHOR,
+  author = NYXTOOLS_AUTHOR,
   description = "",
   version = NPS_VERSION,
-  url = NYX_PLUGIN_WEBSITE
+  url = NYXTOOLS_WEBSITE
 };
 
 /***
@@ -202,10 +200,39 @@ public Action L4D_OnFirstSurvivorLeftSafeArea(int client) {
   return Plugin_Continue;
 }
 
-public void L4D_OnReplaceTank(int tank, int newtank) {
-  NyxMsgDebug("L4D_OnReplaceTank");
-  Player player = new Player(tank);
-  player.TransferHealCount(new Player(newtank));
+/*
+[Nyx] L4D2_OnReplaceWithBot(client: Kiwi, flag: 0)
+[Nyx] L4D2_OnTakeOverZombieBot(bot: yankeera7, client: Tank)
+[Nyx] L4D2_OnReplaceWithBot(client: Tank, flag: 0)
+*/
+public Action L4D2_OnTakeOverZombieBot(int client, int bot) {
+  if (!IsPlayerTank(client) && !IsPlayerTank(bot)) return Plugin_Continue;
+  if (IsPlayerTank(client)) NyxMsgDebug("client: %N is the tank", client);
+  if (IsPlayerTank(bot)) NyxMsgDebug("bot: %N is the tank", bot);
+
+  for (int i = 1; i <= MaxClients; i++) {
+    if (!IsValidClient(i)) continue;
+
+    Player player = new Player(i);
+    if (player.WasTank) {
+      NyxMsgDebug("Player(%N).TransferHealCount(%N)", i, client);
+      player.WasTank = false;
+      player.TransferHealCount(new Player(client));
+    }
+  }
+
+  NyxMsgDebug("L4D2_OnTakeOverZombieBot(bot: %N, client: %N)", bot, client);
+  return Plugin_Continue;
+}
+
+public Action L4D2_OnReplaceWithBot(int client, bool flag) {
+  if (!IsPlayerTank(client)) return Plugin_Continue;
+
+  Player player = new Player(client);
+  player.WasTank = true;
+
+  NyxMsgDebug("L4D2_OnReplaceWithBot(client: %N, flag: %d)", client, flag);
+  return Plugin_Continue;
 }
 
 /***
