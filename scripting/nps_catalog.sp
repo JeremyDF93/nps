@@ -2,7 +2,7 @@
 #include <sourcemod>
 
 #define NYX_DEBUG 1
-#define NYX_PLUGIN_TAG "PS"
+#define NYXTOOLS_TAG "PS"
 #include <nyxtools>
 #include <nps_stocks>
 #include <nps_catalog>

@@ -2,7 +2,7 @@
 #include <sourcemod>
 
 #define NYX_DEBUG 1
-#define NYX_PLUGIN_TAG "PS"
+#define NYXTOOLS_TAG "PS"
 #include <nyxtools>
 #include <nps_stocks>
 #include <nps_storage>
@@ -80,6 +80,7 @@ ConVar g_hConVars[eConVar];
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
   RegPluginLibrary("nps_storage");
 
+  CreateNative("ResetPlayerStorage", Native_ResetPlayerStorage);
   CreateNative("Player.UserID.get", Native_UserIDGet);
   CreateNative("Player.UserID.set", Native_UserIDSet);
   CreateNative("Player.Points.get", Native_PointsGet);
@@ -130,6 +131,14 @@ public void OnAllPluginsLoaded() {
  *    /_/ |_/\__,_/\__/_/ |___/\___/____/  
  *                                         
  */
+
+public int Native_ResetPlayerStorage(Handle plugin, int numArgs) {
+  for (int i = 1; i <= MaxClients; i++) {
+    SetPlayerDefaults(i);
+  }
+
+  return 1;
+}
 
 public int Native_UserIDGet(Handle plugin, int numArgs) {
   int client = EntRefToEntIndex(GetNativeCell(1));

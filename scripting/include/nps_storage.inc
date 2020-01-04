@@ -21,6 +21,8 @@ public SharedPlugin:__pl_nps_storage = {
 #endif
 };
 
+native void ResetPlayerStorage();
+
 methodmap Player __nullable__ {
   public Player(int client) {
     return view_as<Player>(EntIndexToEntRef(client));

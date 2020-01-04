@@ -3,7 +3,7 @@
 #include <colors>
 
 #define NYX_DEBUG 1
-#define NYX_PLUGIN_TAG "PS"
+#define NYXTOOLS_TAG "PS"
 #include <nyxtools>
 #undef REQUIRE_PLUGIN
 #include <nyxtools_l4d2>

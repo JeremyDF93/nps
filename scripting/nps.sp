@@ -122,12 +122,7 @@ public void OnMapStart() {
   char map[PLATFORM_MAX_PATH];
   GetCurrentMap(map, sizeof(map));
   if (StrContains(map, "m1_") != -1) {
-    for (int i = 1; i <= MaxClients; i++) {
-      if (!IsValidClient(i)) continue;
-
-      Player player = new Player(i);
-      player.SetDefaults();
-    }
+    ResetPlayerStorage();
 
     for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
       g_iSpawnCount[i] = 0;
@@ -200,6 +195,14 @@ public Action L4D2_OnFirstSurvivorLeftSafeArea(int client) {
     g_iStartTime = GetTime();
   }
 
+  return Plugin_Continue;
+}
+
+public Action L4D2_OnReplaceTank(int tank, int new_tank) {
+  NyxMsgDebug("L4D_OnReplaceTank(tank: %N, newtank: %N)", tank, new_tank);
+  Player player = new Player(tank);
+  player.TransferHealCount(new Player(new_tank));
+  
   return Plugin_Continue;
 }
 
@@ -328,6 +331,7 @@ public Action ConCmd_Buy(int client, int args) {
   if (args < 1) {
     if (!IsValidClient(client)) {
       NyxMsgReply(client, "Cannot display buy menu to console");
+      return Plugin_Handled;
     }
 
     FakeClientCommandEx(client, "sm_buymenu");
