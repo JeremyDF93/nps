@@ -61,6 +61,8 @@ ConVar g_hConVars[NyxConVar];
  *                                       
  */
 
+ bool g_bLateLoad;
+
 int g_iMenuTarget[MAXPLAYERS + 1];
 int g_iSpawnCount[L4D2ClassType];
 
@@ -84,6 +86,8 @@ int g_iLastCmd[MAXPLAYERS + 1];
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
   RegPluginLibrary("nps");
+  g_bLateLoad = late;
+
   return APLRes_Success;
 }
 
@@ -122,11 +126,17 @@ public void OnMapStart() {
   char map[PLATFORM_MAX_PATH];
   GetCurrentMap(map, sizeof(map));
   if (StrContains(map, "m1_") != -1) {
-    ResetPlayerStorage();
+    if (!g_bLateLoad) {
+      ResetPlayerStorage();
+    }
 
     for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
       g_iSpawnCount[i] = 0;
     }
+  }
+
+  for (int i = 1; i <= MaxClients; i++) {
+    g_iLastCmd[i] = 0;
   }
 
   g_bFinal = L4D2_IsMissionFinalMap();

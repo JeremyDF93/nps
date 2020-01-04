@@ -5,9 +5,7 @@
 #define NYX_DEBUG 1
 #define NYXTOOLS_TAG "PS"
 #include <nyxtools>
-#undef REQUIRE_PLUGIN
 #include <nyxtools_l4d2>
-#define REQUIRE_PLUGIN
 #include <nps_stocks>
 #include <nps_storage>
 
