@@ -361,9 +361,10 @@ public Action ConCmd_Buy(int client, int args) {
     return Plugin_Handled;
   }
 
+  // TODO: fix this mess
   if (IsPlayerInfected(client)) {
     L4D2ClassType itemClass = L4D2_StringToClass(item[Catalog_Item]);
-    if (itemClass == L4D2Class_Witch || itemClass == L4D2Class_Survivor || itemClass == L4D2Class_Unknown) {
+    if (itemClass == L4D2Class_Witch || itemClass == L4D2Class_Unknown) {
       BuyItem(client, client, item);
       return Plugin_Handled;
     }
@@ -372,6 +373,16 @@ public Action ConCmd_Buy(int client, int args) {
     if (IsPlayerAlive(client)) {
       if (IsPlayerGhost(client)) { // Change their class
         BuyItem(client, client, item, true);
+
+        if (itemClass == L4D2Class_Tank) {
+          L4D2_RespawnPlayer(client);
+          L4D2_SetInfectedClass(client, itemClass);
+          float pos[3]; GetClientEyePosition(client, pos);
+          L4D2_GetRandomPZSpawnPosition(L4D2_GetClientClass(client), _, client, pos);
+          TeleportEntity(client, pos, NULL_VECTOR, NULL_VECTOR);
+          return Plugin_Handled;
+        }
+
         L4D2_SetInfectedClass(client, itemClass);
         return Plugin_Handled;
       } else {
@@ -406,6 +417,16 @@ public Action ConCmd_Buy(int client, int args) {
       }
     } else {
       BuyItem(client, client, item, true);
+
+      if (itemClass == L4D2Class_Tank) {
+        L4D2_RespawnPlayer(client);
+        L4D2_SetInfectedClass(client, itemClass);
+        float pos[3]; GetClientEyePosition(client, pos);
+        L4D2_GetRandomPZSpawnPosition(L4D2_GetClientClass(client), _, client, pos);
+        TeleportEntity(client, pos, NULL_VECTOR, NULL_VECTOR);
+        return Plugin_Handled;
+      }
+
       // set the m_iPlayerState before becoming a ghost - this is required
       SetEntProp(client, Prop_Send, "m_iPlayerState", 6);
       L4D2_BecomeGhost(client);
@@ -415,46 +436,6 @@ public Action ConCmd_Buy(int client, int args) {
   }
 
   BuyItem(client, client, item);
-
-/*
-  if (IsPlayerInfected(client)) {
-    if (IsPlayerAlive(client)) {
-      int target;
-      if (args < 2) {
-        int playerCount, playerList[MAXPLAYERS + 1];
-        for (int i = 1; i <= MaxClients; i++) {
-          if (!IsValidClient(i, true)) continue;
-          if (!IsPlayerInfected(i)) continue;
-          if (IsPlayerAlive(i)) continue;
-          if (client == i) continue;
-
-          playerList[playerCount++] = i;
-        }
-
-        if (playerCount) {
-          target = playerList[GetRandomInt(0, playerCount - 1)];
-        } else {
-          NyxPrintToChat(client, "%t", "Unable to Give");
-          return Plugin_Handled;
-        }
-      } else {
-        target = GetCmdTarget(2, client, false, false);
-      }
-
-      if (!IsValidClient(target)) {
-        NyxPrintToChat(client, "%t", "Unable to Give");
-        return Plugin_Handled;
-      }
-
-      BuyItem(client, target, item);
-      NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For", client, item[Catalog_Name], target);
-    } else {
-      BuyItem(client, client, item);
-    }
-  } else {
-    BuyItem(client, client, item);
-  }
- */
 
   return Plugin_Handled;
 }
@@ -801,7 +782,7 @@ bool CanBuy(int client, any[eCatalog] item) {
       return false;
     }
 
-    if (!g_bTankAllowed) {
+    if (!g_bTankAllowed && (g_hConVars[ConVar_TankDelay].IntValue != 0)) {
       int timeLeft = g_hConVars[ConVar_TankDelay].IntValue - g_iStartTimePassed;
       int minutes = timeLeft / 60;
       int seconds = timeLeft % 60;
