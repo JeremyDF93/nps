@@ -367,14 +367,19 @@ public Action ConCmd_Buy(int client, int args) {
     if (class != L4D2Class_Witch && class != L4D2Class_Unknown) {
       if (IsPlayerAlive(client)) {
         if (IsPlayerGhost(client)) {
-          BuyItem(client, client, item, true);
-          ZombiePurchase(client, class);
+          if (ZombiePurchase(client, class)) {
+            BuyItem(client, client, item, true);
+          }
+
           return Plugin_Handled;
         }
       } else {
-        BuyItem(client, client, item, true);
-        ZombiePurchase(client, class);
+        if (ZombiePurchase(client, class)) {
+          BuyItem(client, client, item, true);
+        }
+
         return Plugin_Handled;
+      }
       }
     } else {
       BuyItem(client, client, item);
@@ -405,9 +410,11 @@ public Action ConCmd_Buy(int client, int args) {
       return Plugin_Handled;
     }
 
-    BuyItem(client, target, item, true);
-    ZombiePurchase(target, class);
-    NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For Player", client, item[Catalog_Name], target);
+    if (ZombiePurchase(target, class)) {
+      BuyItem(client, target, item, true);
+      NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For Player", client, item[Catalog_Name], target);
+    }
+    
     return Plugin_Handled;
   }
 
