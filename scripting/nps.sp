@@ -361,82 +361,57 @@ public Action ConCmd_Buy(int client, int args) {
     return Plugin_Handled;
   }
 
-  // TODO: fix this mess
   if (IsPlayerInfected(client)) {
-    L4D2ClassType itemClass = L4D2_StringToClass(item[Catalog_Item]);
-    if (itemClass == L4D2Class_Witch || itemClass == L4D2Class_Unknown) {
+    L4D2ClassType class = L4D2_StringToClass(item[Catalog_Item]);
+    
+    if (class != L4D2Class_Witch && class != L4D2Class_Unknown) {
+      if (IsPlayerAlive(client)) {
+        if (IsPlayerGhost(client)) {
+          BuyItem(client, client, item, true);
+          ZombiePurchase(client, class);
+          return Plugin_Handled;
+        }
+      } else {
+        BuyItem(client, client, item, true);
+        ZombiePurchase(client, class);
+        return Plugin_Handled;
+      }
+    } else {
       BuyItem(client, client, item);
       return Plugin_Handled;
     }
 
-    // we're trying to buy a controllable special infected zombie if we're down here
-    if (IsPlayerAlive(client)) {
-      if (IsPlayerGhost(client)) { // Change their class
-        BuyItem(client, client, item, true);
+    int target = client;
+    if (args < 2) {
+      int playerCount, playerList[MAXPLAYERS + 1];
+      for (int i = 1; i <= MaxClients; i++) {
+        if (!IsValidClient(i, true)) continue;
+        if (!IsPlayerInfected(i)) continue;
+        if (client == i) continue;
 
-        if (itemClass == L4D2Class_Tank) {
-          L4D2_RespawnPlayer(client);
-          L4D2_SetInfectedClass(client, itemClass);
-          float pos[3]; GetClientEyePosition(client, pos);
-          L4D2_GetRandomPZSpawnPosition(L4D2_GetClientClass(client), _, client, pos);
-          TeleportEntity(client, pos, NULL_VECTOR, NULL_VECTOR);
-          return Plugin_Handled;
-        }
+        playerList[playerCount++] = i;
+      }
 
-        L4D2_SetInfectedClass(client, itemClass);
-        return Plugin_Handled;
-      } else {
-        int target;
-        if (args < 2) { // If there is no target arg just pick a random one
-          int playerCount, playerList[MAXPLAYERS + 1];
-          for (int i = 1; i <= MaxClients; i++) {
-            if (!IsValidClient(i, true)) continue;
-            if (!IsPlayerInfected(i)) continue;
-            if (IsPlayerAlive(i)) continue;
-            if (client == i) continue;
-
-            playerList[playerCount++] = i;
-          }
-
-          if (playerCount) { // We found a random target
-            target = playerList[GetRandomInt(0, playerCount - 1)];
-          }
-        } else {
-          target = GetCmdTarget(2, client, false, false); // get the requested target
-        }
-
-        if (!IsValidBuyTarget(target)) {
-          BuyItem(client, client, item);
-          NyxPrintToTeam(GetClientTeam(client), "%t", "Spawned", client, item[Catalog_Name]);
-          return Plugin_Handled;
-        }
-
-        BuyItem(client, target, item);
-        NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For Player", client, item[Catalog_Name], target);
-        return Plugin_Handled;
+      if (playerCount) {
+        target = playerList[GetRandomInt(0, playerCount - 1)];
       }
     } else {
-      BuyItem(client, client, item, true);
+      target = GetCmdTarget(2, client, false, false);
+    }
 
-      if (itemClass == L4D2Class_Tank) {
-        L4D2_RespawnPlayer(client);
-        L4D2_SetInfectedClass(client, itemClass);
-        float pos[3]; GetClientEyePosition(client, pos);
-        L4D2_GetRandomPZSpawnPosition(L4D2_GetClientClass(client), _, client, pos);
-        TeleportEntity(client, pos, NULL_VECTOR, NULL_VECTOR);
-        return Plugin_Handled;
-      }
-
-      // set the m_iPlayerState before becoming a ghost - this is required
-      SetEntProp(client, Prop_Send, "m_iPlayerState", 6);
-      L4D2_BecomeGhost(client);
-      L4D2_SetInfectedClass(client, itemClass);
+    if (!IsValidBuyTarget(target)) {
+      BuyItem(client, client, item);
+      NyxPrintToTeam(GetClientTeam(client), "%t", "Spawned", client, item[Catalog_Name]);
       return Plugin_Handled;
     }
+
+    BuyItem(client, target, item, true);
+    ZombiePurchase(target, class);
+    NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For Player", client, item[Catalog_Name], target);
+    return Plugin_Handled;
   }
 
   BuyItem(client, client, item);
-
   return Plugin_Handled;
 }
 
@@ -828,4 +803,38 @@ void BuyItem(int buyer, int receiver, any[eCatalog] item, bool dontRun=false) {
   if (StrEqual(item[Catalog_Item], "health", false)) {
     player.HealCount++;
   }
+}
+
+bool ZombiePurchase(int client, L4D2ClassType class) {
+  if (IsPlayerAlive(client)) {
+    if (IsPlayerGhost(client)) {
+      if (class == L4D2Class_Tank) {
+        SpawnPurchasedTank(client);
+        return true;
+      }
+
+      L4D2_SetInfectedClass(client, class);
+      return true;
+    }
+
+    return false;
+  }
+
+  if (class == L4D2Class_Tank) {
+    SpawnPurchasedTank(client);
+    return true;
+  }
+
+  SetEntProp(client, Prop_Send, "m_iPlayerState", 6);
+  L4D2_BecomeGhost(client);
+  L4D2_SetInfectedClass(client, class);
+  return true;
+}
+
+void SpawnPurchasedTank(int client) {
+  L4D2_RespawnPlayer(client);
+  L4D2_SetInfectedClass(client, L4D2Class_Tank);
+  float pos[3]; GetClientEyePosition(client, pos);
+  L4D2_GetRandomPZSpawnPosition(L4D2_GetClientClass(client), _, client, pos);
+  TeleportEntity(client, pos, NULL_VECTOR, NULL_VECTOR);
 }

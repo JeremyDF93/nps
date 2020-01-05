@@ -28,7 +28,7 @@ stock bool IsSpitterDamage(int type){
 }
 
 stock bool IsValidBuyTarget(int target) {
-  if (!IsValidClient(target)) return false;
+  if (!IsValidClient(target, true)) return false;
   if (!IsPlayerInfected(target)) return false;
   if (IsPlayerAlive(target)) return false;
   if (IsPlayerGhost(target)) return false;
