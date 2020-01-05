@@ -380,7 +380,6 @@ public Action ConCmd_Buy(int client, int args) {
 
         return Plugin_Handled;
       }
-      }
     } else {
       BuyItem(client, client, item);
       return Plugin_Handled;
