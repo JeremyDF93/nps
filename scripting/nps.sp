@@ -367,14 +367,14 @@ public Action ConCmd_Buy(int client, int args) {
     if (class != L4D2Class_Witch && class != L4D2Class_Unknown) {
       if (IsPlayerAlive(client)) {
         if (IsPlayerGhost(client)) {
-          if (ZombiePurchase(client, class)) {
+          if (SpawnZombiePurchase(client, class)) {
             BuyItem(client, client, item, true);
           }
 
           return Plugin_Handled;
         }
       } else {
-        if (ZombiePurchase(client, class)) {
+        if (SpawnZombiePurchase(client, class)) {
           BuyItem(client, client, item, true);
         }
 
@@ -409,7 +409,7 @@ public Action ConCmd_Buy(int client, int args) {
       return Plugin_Handled;
     }
 
-    if (ZombiePurchase(target, class)) {
+    if (SpawnZombiePurchase(target, class)) {
       BuyItem(client, target, item, true);
       NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For Player", client, item[Catalog_Name], target);
     }
@@ -811,11 +811,11 @@ void BuyItem(int buyer, int receiver, any[eCatalog] item, bool dontRun=false) {
   }
 }
 
-bool ZombiePurchase(int client, L4D2ClassType class) {
+bool SpawnZombiePurchase(int client, L4D2ClassType class) {
   if (IsPlayerAlive(client)) {
     if (IsPlayerGhost(client)) {
       if (class == L4D2Class_Tank) {
-        SpawnPurchasedTank(client);
+        SpawnTankPurchase(client);
         return true;
       }
 
@@ -827,7 +827,7 @@ bool ZombiePurchase(int client, L4D2ClassType class) {
   }
 
   if (class == L4D2Class_Tank) {
-    SpawnPurchasedTank(client);
+    SpawnTankPurchase(client);
     return true;
   }
 
@@ -837,7 +837,7 @@ bool ZombiePurchase(int client, L4D2ClassType class) {
   return true;
 }
 
-void SpawnPurchasedTank(int client) {
+void SpawnTankPurchase(int client) {
   L4D2_RespawnPlayer(client);
   L4D2_SetInfectedClass(client, L4D2Class_Tank);
   float pos[3]; GetClientEyePosition(client, pos);
