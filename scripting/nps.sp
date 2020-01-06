@@ -15,7 +15,7 @@
 #pragma newdecls required
 
 public Plugin myinfo = {
-  name = "Nyxtools - L4D2 Point System",
+  name = "NPS - Core",
   author = NYXTOOLS_AUTHOR,
   description = "",
   version = NPS_VERSION,
