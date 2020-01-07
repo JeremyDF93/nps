@@ -249,10 +249,13 @@ public Action L4D2_OnReplaceWithBot(int client, bool flag) {
 
 public Action L4D2_OnSwapTeams() {
   ResetPlayerStorage(true);
-  
+
   for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
     g_iSpawnCount[i] = 0;
   }
+
+  g_iStartTime = 0;
+  g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
 
   return Plugin_Continue;
 }
