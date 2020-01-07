@@ -202,7 +202,7 @@ public int MenuHandler_ConfirmMenu(Menu menu, MenuAction action, int param1, int
 
 bool BuildMainMenu(int client, Menu menu) {
   char team[16], category[64];
-  L4D2_TeamToString(GetClientTeam(client), team, sizeof(team));
+  L4D2_TeamToString(L4D2_GetClientTeam(client), team, sizeof(team));
   Format(category, sizeof(category), "%s_menu", team);
 
   return BuildSubMenu(menu, category);
