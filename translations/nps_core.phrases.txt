@@ -281,4 +281,9 @@
     "#format"   "{1:i},{2:s}"
     "en"        "You need {olive}{1}{default} points to buy a {olive}{2}{default}."
   }
+  "Class Limit Reached"
+  {
+    "#format"   "{1:s}"
+    "en"        "Class limit reached for {olive}{1}{default}."
+  }
 }

@@ -365,6 +365,11 @@ public Action ConCmd_Buy(int client, int args) {
     L4D2ClassType class = L4D2_StringToClass(item[Catalog_Item]);
     
     if (class != L4D2Class_Witch && class != L4D2Class_Unknown) {
+      if (!L4D2_IsClassAllowed(class)) {
+        NyxPrintToTeam(GetClientTeam(client), "%t", "Class Limit Reached", item[Catalog_Name]);
+        return Plugin_Handled;
+      }
+
       if (IsPlayerAlive(client)) {
         if (IsPlayerGhost(client)) {
           if (SpawnZombiePurchase(client, class)) {
@@ -690,7 +695,7 @@ bool CanBuy(int client, any[eCatalog] item) {
 
   // is the item team restricted?
   if (strlen(item[Catalog_Team]) != 0) {
-    if (GetClientTeam(client) != L4D2_StringToTeam(item[Catalog_Team])) {
+    if (L4D2_GetClientTeam(client) != L4D2_StringToTeam(item[Catalog_Team])) {
       NyxPrintToChat(client, "%t", "Item Wrong Team");
       return false;
     }
