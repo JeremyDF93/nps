@@ -66,7 +66,6 @@ ConVar g_hConVars[NyxConVar];
 int g_iMenuTarget[MAXPLAYERS + 1];
 int g_iSpawnCount[L4D2ClassType];
 
-bool g_bFinal;
 bool g_bTankAllowed;
 
 int g_iStartTime;
@@ -121,11 +120,9 @@ public void OnPluginStart() {
 }
 
 public void OnMapStart() {
-  NyxMsgDebug("OnMapStart, Final %b", L4D2_IsMissionFinalMap());
-
-  char map[PLATFORM_MAX_PATH];
-  GetCurrentMap(map, sizeof(map));
-  if (StrContains(map, "m1_") != -1) {
+  NyxMsgDebug("OnMapStart, Final %d", L4D2_IsMissionFinalMap());
+  if (L4D2_IsMissionStartMap()) {
+    NyxMsgDebug("IsMissionStartMap %d", L4D2_IsMissionStartMap());
     if (!g_bLateLoad) {
       ResetPlayerStorage();
     }
@@ -139,7 +136,6 @@ public void OnMapStart() {
     g_iLastCmd[i] = 0;
   }
 
-  g_bFinal = L4D2_IsMissionFinalMap();
   g_iStartTime = 0;
   g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
 }
@@ -365,11 +361,6 @@ public Action ConCmd_Buy(int client, int args) {
     L4D2ClassType class = L4D2_StringToClass(item[Catalog_Item]);
     
     if (class != L4D2Class_Witch && class != L4D2Class_Unknown) {
-      if (!L4D2_IsClassAllowed(class)) {
-        NyxPrintToTeam(GetClientTeam(client), "%t", "Class Limit Reached", item[Catalog_Name]);
-        return Plugin_Handled;
-      }
-
       if (IsPlayerAlive(client)) {
         if (IsPlayerGhost(client)) {
           if (SpawnZombiePurchase(client, class)) {
@@ -409,6 +400,11 @@ public Action ConCmd_Buy(int client, int args) {
     }
 
     if (!IsValidBuyTarget(target)) {
+      if (!L4D2_IsClassAllowed(class)) {
+        NyxPrintToTeam(GetClientTeam(client), "%t", "Class Limit Reached", item[Catalog_Name]);
+        return Plugin_Handled;
+      }
+      
       BuyItem(client, client, item);
       NyxPrintToTeam(GetClientTeam(client), "%t", "Spawned", client, item[Catalog_Name]);
       return Plugin_Handled;
@@ -763,7 +759,7 @@ bool CanBuy(int client, any[eCatalog] item) {
 
   // are we trying to by a tank?
   if (StrEqual(item[Catalog_Item], "tank", false)) {
-    if (g_bFinal && !g_hConVars[ConVar_TankAllowedFinal].BoolValue) {
+    if (L4D2_IsMissionFinalMap() && !g_hConVars[ConVar_TankAllowedFinal].BoolValue) {
       NyxPrintToChat(client, "%t", "Tank Not Allowed in Final");
       return false;
     }
