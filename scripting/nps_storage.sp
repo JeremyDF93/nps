@@ -133,8 +133,9 @@ public void OnAllPluginsLoaded() {
  */
 
 public int Native_ResetPlayerStorage(Handle plugin, int numArgs) {
+  bool keepPoints = GetNativeCell(1);
   for (int i = 1; i <= MaxClients; i++) {
-    SetPlayerDefaults(i);
+    SetPlayerDefaults(i, -1, keepPoints);
   }
 
   return 1;
@@ -323,9 +324,9 @@ public int Native_WasTankSet(Handle plugin, int numArgs) {
  *                                                     
  */
 
-void SetPlayerDefaults(int client, int userid=-1) {
+void SetPlayerDefaults(int client, int userid=-1, bool keepPoints=false) {
   g_aPlayer[client][Player_UserID] = userid;
-  g_aPlayer[client][Player_Points] = g_hConVars[ConVar_StartPoints].IntValue;
+  if (!keepPoints) g_aPlayer[client][Player_Points] = g_hConVars[ConVar_StartPoints].IntValue;
   g_aPlayer[client][Player_Reward] = 0;
   g_aPlayer[client][Player_HeadshotCount] = 0;
   g_aPlayer[client][Player_KillCount] = 0;

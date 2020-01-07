@@ -247,6 +247,16 @@ public Action L4D2_OnReplaceWithBot(int client, bool flag) {
   return Plugin_Continue;
 }
 
+public Action L4D2_OnSwapTeams() {
+  ResetPlayerStorage(true);
+  
+  for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
+    g_iSpawnCount[i] = 0;
+  }
+
+  return Plugin_Continue;
+}
+
 /***
  *      _______                         
  *     /_  __(_)___ ___  ___  __________

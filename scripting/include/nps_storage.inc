@@ -21,7 +21,7 @@ public SharedPlugin:__pl_nps_storage = {
 #endif
 };
 
-native void ResetPlayerStorage();
+native void ResetPlayerStorage(bool keepPoints=false);
 
 methodmap Player __nullable__ {
   public Player(int client) {
