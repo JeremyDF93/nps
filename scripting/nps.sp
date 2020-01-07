@@ -348,7 +348,7 @@ public Action ConCmd_Buy(int client, int args) {
   GetCmdArg(1, search, sizeof(search));
 
   any item[eCatalog];
-  if (!FindItem(search, item)) {
+  if (!FindClientItem(client, search, item)) {
     NyxPrintToChat(client, "%t", "Item Doesn't Exist", search);
     return Plugin_Handled;
   }
@@ -488,7 +488,7 @@ public Action ConCmd_ShowTeamPoints(int client, int args) {
 public Action ConCmd_Heal(int client, int args) {
   if (IsValidClient(client)) {
     any item[eCatalog];
-    if (!FindItem("heal", item)) {
+    if (!FindClientItem(client, "heal", item)) {
       NyxPrintToChat(client, "%t", "Item Doesn't Exist", "heal");
       return Plugin_Handled;
     }
@@ -511,7 +511,7 @@ public Action ConCmd_BuyAgain(int client, int args) {
     }
 
     any item[eCatalog];
-    if (!FindItem(buffer, item)) {
+    if (!FindClientItem(client, buffer, item)) {
       NyxPrintToChat(client, "%t", "Item Doesn't Exist", buffer);
       return Plugin_Handled;
     }

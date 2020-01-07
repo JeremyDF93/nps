@@ -156,7 +156,7 @@ void Display_ConfirmMenu(int client, const char[] key) {
   Menu menu = new Menu(MenuHandler_ConfirmMenu);
   
   char title[32];
-  any storage[eCatalog]; FindItem(key, storage);
+  any storage[eCatalog]; FindClientItem(client, key, storage);
   Format(title, sizeof(title), "Cost: %i", storage[Catalog_Cost]);
   menu.SetTitle(title);
 

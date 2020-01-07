@@ -4,6 +4,7 @@
 #define NYX_DEBUG 1
 #define NYXTOOLS_TAG "PS"
 #include <nyxtools>
+#include <nyxtools_l4d2>
 #include <nps_stocks>
 #include <nps_catalog>
 
@@ -32,6 +33,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
   RegPluginLibrary("nps_catalog");
 
   CreateNative("FindItem", Native_FindItem);
+  CreateNative("FindClientItem", Native_FindClientItem);
 
   return APLRes_Success;
 }
@@ -118,6 +120,30 @@ public int Native_FindItem(Handle plugin, int numArgs) {
   return false;
 }
 
+public int Native_FindClientItem(Handle plugin, int numArgs) {
+  int client = GetNativeCell(1);
+  char name[64]; GetNativeString(2, name, sizeof(name));
+
+  if (!IsValidClient(client)) {
+    return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index (%d)", client);
+  }
+
+  any item[eCatalog];
+  if (FindItem(name, item)) {
+    if (StrEqual(item[Catalog_Item], "health", false)) {
+      if (IsPlayerTank(client)) {
+        item[Catalog_Cost] = item[Catalog_Cost] * item[Catalog_CostMultiplierTank];
+      }
+    }
+
+    SetNativeArray(3, item, sizeof(item));
+
+    return true;
+  }
+
+  return false;
+}
+
 /***
  *        ___       __          _          ______                                          __    
  *       /   | ____/ /___ ___  (_)___     / ____/___  ____ ___  ____ ___  ____ _____  ____/ /____
@@ -175,6 +201,7 @@ void BuildItem(KeyValues kv, any[eCatalog] item) {
   kv.GetString("command_args", item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]), item[Catalog_CommandArgs]);
   kv.GetString("team", item[Catalog_Team], sizeof(item[Catalog_Team]), item[Catalog_Team]);
   item[Catalog_Cost] = kv.GetNum("cost", item[Catalog_Cost]);
+  item[Catalog_CostMultiplierTank] = kv.GetNum("cost_multiplier_tank", item[Catalog_CostMultiplierTank]);
   item[Catalog_Limit] = kv.GetNum("limit", item[Catalog_Limit]);
   item[Catalog_Announce] = (kv.GetNum("announce", item[Catalog_Announce]) == 1);
   kv.GetString("announce_phrase", item[Catalog_AnnouncePhrase], sizeof(item[Catalog_AnnouncePhrase]), item[Catalog_AnnouncePhrase]);

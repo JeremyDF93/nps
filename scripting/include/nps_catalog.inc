@@ -22,6 +22,7 @@ enum eCatalog {
   String:Catalog_CommandType[64],
   String:Catalog_Team[16],
   Catalog_Cost,
+  Catalog_CostMultiplierTank,
   Catalog_Limit,
   bool:Catalog_Announce,
   bool:Catalog_MustBeIncapacitated,
@@ -38,6 +39,7 @@ enum eCatalog {
  */
 
 native bool FindItem(const char[] name, any[eCatalog] item);
+native bool FindClientItem(int client, const char[] name, any[eCatalog] item);
 
 public SharedPlugin:__pl_nps_catalog = {
   name = "nps_catalog",
