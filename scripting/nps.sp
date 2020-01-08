@@ -803,7 +803,10 @@ void BuyItem(int buyer, int receiver, any[eCatalog] item, bool dontRun=false) {
   }
 
   if (!dontRun) {
-    ExecuteCheatCommand(receiver, "%s %s", item[Catalog_Command], item[Catalog_CommandArgs]);
+    bool success = ExecuteCheatCommand(receiver, "%s %s", item[Catalog_Command], item[Catalog_CommandArgs]);
+    if (!success) {
+      NyxPrintToChat(buyer, "An internal error occurred while executing this command.");
+    }
   }
 
   player.Points -= item[Catalog_Cost];
