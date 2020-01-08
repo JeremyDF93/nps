@@ -803,7 +803,7 @@ void BuyItem(int buyer, int receiver, any[eCatalog] item, bool dontRun=false) {
   }
 
   if (!dontRun) {
-    FakeClientCommandCheat(receiver, "%s %s", item[Catalog_Command], item[Catalog_CommandArgs]);
+    ExecuteCheatCommand(receiver, "%s %s", item[Catalog_Command], item[Catalog_CommandArgs]);
   }
 
   player.Points -= item[Catalog_Cost];
