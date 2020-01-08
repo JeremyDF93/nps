@@ -121,8 +121,8 @@ public void OnPluginStart() {
 
 public void OnMapStart() {
   NyxMsgDebug("OnMapStart, Final %d", L4D2_IsMissionFinalMap());
+  NyxMsgDebug("IsMissionStartMap %d", L4D2_IsMissionStartMap());
   if (L4D2_IsMissionStartMap()) {
-    NyxMsgDebug("IsMissionStartMap %d", L4D2_IsMissionStartMap());
     if (!g_bLateLoad) {
       ResetPlayerStorage();
     }

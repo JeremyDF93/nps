@@ -325,7 +325,7 @@ public int Native_WasTankSet(Handle plugin, int numArgs) {
  */
 
 void SetPlayerDefaults(int client, int userid=-1, bool keepPoints=false) {
-  g_aPlayer[client][Player_UserID] = userid;
+  if (!keepPoints) g_aPlayer[client][Player_UserID] = userid;
   if (!keepPoints) g_aPlayer[client][Player_Points] = g_hConVars[ConVar_StartPoints].IntValue;
   g_aPlayer[client][Player_Reward] = 0;
   g_aPlayer[client][Player_HeadshotCount] = 0;
