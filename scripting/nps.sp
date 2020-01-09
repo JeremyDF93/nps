@@ -117,6 +117,8 @@ public void OnPluginStart() {
   g_hConVars[ConVar_TankAllowedFinal] = CreateConVar("nps_tank_allowed_final", "0", "Tank allowed on the final map?", _, true, 0.0, true, 1.0);
   g_hConVars[ConVar_AnnounceNeeds] = CreateConVar("nps_announce_needs", "1", "Announce when a player tries to buy with insufficient funds.", _, true, 0.0, true, 1.0);
   g_hConVars[ConVar_Charity] = CreateConVar("nps_charity", "1", "Give players with less than the minimal starting points at the start of a round some points?", _, true, 0.0, true, 1.0);
+
+  HookEvent("round_start", Event_RoundStart);
 }
 
 public void OnMapStart() {
@@ -448,7 +450,7 @@ public Action ConCmd_GivePoints(int client, int args) {
   int target = GetCmdTarget(1, client, false, false);
   int amount = GetCmdIntEx(2, 1, g_hConVars[ConVar_MaxPoints].IntValue, 5);
 
-  if (!IsValidtarget(target)) {
+  if (!IsValidClient(target)) {
     return Plugin_Handled;
   } else if (client == target) {
     NyxPrintToChat(client, "%t", "Sent Self Points");
