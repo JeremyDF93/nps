@@ -448,7 +448,9 @@ public Action ConCmd_GivePoints(int client, int args) {
   int target = GetCmdTarget(1, client, false, false);
   int amount = GetCmdIntEx(2, 1, g_hConVars[ConVar_MaxPoints].IntValue, 5);
 
-  if (client == target) {
+  if (!IsValidtarget(target)) {
+    return Plugin_Handled;
+  } else if (client == target) {
     NyxPrintToChat(client, "%t", "Sent Self Points");
   } else if (GetClientTeam(client) != GetClientTeam(target)) {
     NyxPrintToChat(client, "%t", "Sent Wrong Team Points");
