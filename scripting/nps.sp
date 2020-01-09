@@ -416,22 +416,22 @@ public Action ConCmd_Buy(int client, int args) {
       target = GetCmdTarget(2, client, false, false);
     }
 
-    if (!IsValidBuyTarget(target)) {
-      if (!L4D2_IsClassAllowed(class)) {
-        NyxPrintToTeam(GetClientTeam(client), "%t", "Class Limit Reached", item[Catalog_Name]);
+    if (IsValidBuyTarget(target)) {
+      if (SpawnZombiePurchase(target, class)) {
+        BuyItem(client, target, item, true);
+        NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For Player", client, item[Catalog_Name], target);
+
         return Plugin_Handled;
       }
-      
-      BuyItem(client, client, item);
-      NyxPrintToTeam(GetClientTeam(client), "%t", "Spawned", client, item[Catalog_Name]);
-      return Plugin_Handled;
-    }
-
-    if (SpawnZombiePurchase(target, class)) {
-      BuyItem(client, target, item, true);
-      NyxPrintToTeam(GetClientTeam(client), "%t", "Bought Something For Player", client, item[Catalog_Name], target);
     }
     
+    if (!L4D2_IsClassAllowed(class)) {
+      NyxPrintToTeam(GetClientTeam(client), "%t", "Class Limit Reached", item[Catalog_Name]);
+      return Plugin_Handled;
+    }
+    
+    BuyItem(client, client, item);
+    NyxPrintToTeam(GetClientTeam(client), "%t", "Spawned", client, item[Catalog_Name]);
     return Plugin_Handled;
   }
 
