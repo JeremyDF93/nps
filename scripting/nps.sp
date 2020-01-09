@@ -289,6 +289,8 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 
   if (g_hConVars[ConVar_Charity].BoolValue) {
     for (int i = 1; i <= MaxClients; i++) {
+      if (!IsValidClient(i)) continue;
+      
       Player player = new Player(i);
       if (player.Points < g_hConVars[ConVar_StartPoints].IntValue) {
         player.Points = g_hConVars[ConVar_StartPoints].IntValue;
