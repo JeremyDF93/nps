@@ -23,12 +23,12 @@ public Plugin myinfo = {
 };
 
 /***
- *        ______                          
+ *        ______
  *       / ____/___  __  ______ ___  _____
  *      / __/ / __ \/ / / / __ `__ \/ ___/
- *     / /___/ / / / /_/ / / / / / (__  ) 
- *    /_____/_/ /_/\__,_/_/ /_/ /_/____/  
- *                                        
+ *     / /___/ / / / /_/ / / / / / (__  )
+ *    /_____/_/ /_/\__,_/_/ /_/ /_/____/
+ *
  */
 
 enum NyxConVar {
@@ -42,23 +42,23 @@ enum NyxConVar {
 }
 
 /***
- *       ______          _    __               
+ *       ______          _    __
  *      / ____/___  ____| |  / /___ ___________
  *     / /   / __ \/ __ \ | / / __ `/ ___/ ___/
- *    / /___/ /_/ / / / / |/ / /_/ / /  (__  ) 
- *    \____/\____/_/ /_/|___/\__,_/_/  /____/  
- *                                             
+ *    / /___/ /_/ / / / / |/ / /_/ / /  (__  )
+ *    \____/\____/_/ /_/|___/\__,_/_/  /____/
+ *
  */
 
 ConVar g_hConVars[NyxConVar];
 
 /***
- *       ________      __          __    
+ *       ________      __          __
  *      / ____/ /___  / /_  ____ _/ /____
  *     / / __/ / __ \/ __ \/ __ `/ / ___/
- *    / /_/ / / /_/ / /_/ / /_/ / (__  ) 
- *    \____/_/\____/_.___/\__,_/_/____/  
- *                                       
+ *    / /_/ / / /_/ / /_/ / /_/ / (__  )
+ *    \____/_/\____/_.___/\__,_/_/____/
+ *
  */
 
  bool g_bLateLoad;
@@ -75,12 +75,12 @@ int g_iTimeCmd[MAXPLAYERS + 1];
 int g_iLastCmd[MAXPLAYERS + 1];
 
 /***
- *        ____  __            _          ____      __            ____              
- *       / __ \/ /_  ______ _(_)___     /  _/___  / /____  _____/ __/___ _________ 
+ *        ____  __            _          ____      __            ____
+ *       / __ \/ /_  ______ _(_)___     /  _/___  / /____  _____/ __/___ _________
  *      / /_/ / / / / / __ `/ / __ \    / // __ \/ __/ _ \/ ___/ /_/ __ `/ ___/ _ \
  *     / ____/ / /_/ / /_/ / / / / /  _/ // / / / /_/  __/ /  / __/ /_/ / /__/  __/
- *    /_/   /_/\__,_/\__, /_/_/ /_/  /___/_/ /_/\__/\___/_/  /_/  \__,_/\___/\___/ 
- *                  /____/                                                         
+ *    /_/   /_/\__,_/\__, /_/_/ /_/  /___/_/ /_/\__/\___/_/  /_/  \__,_/\___/\___/
+ *                  /____/
  */
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
@@ -128,6 +128,7 @@ public void OnMapStart() {
     if (!g_bLateLoad) {
       ResetPlayerStorage();
     }
+    g_bLateLoad = false;
 
     for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
       g_iSpawnCount[i] = 0;
@@ -152,7 +153,7 @@ public void OnClientPostAdminCheck(int client) {
 public void OnGameFrame() {
   if (!g_bTankAllowed && g_iStartTime > 0) {
     g_iStartTimePassed = GetTime() - g_iStartTime;
-    
+
     if (g_iStartTimePassed >= g_hConVars[ConVar_TankDelay].IntValue) {
       g_bTankAllowed = true;
     }
@@ -188,12 +189,12 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 }
 
 /***
- *        ____      __            ____                    
+ *        ____      __            ____
  *       /  _/___  / /____  _____/ __/___ _________  _____
  *       / // __ \/ __/ _ \/ ___/ /_/ __ `/ ___/ _ \/ ___/
- *     _/ // / / / /_/  __/ /  / __/ /_/ / /__/  __(__  ) 
- *    /___/_/ /_/\__/\___/_/  /_/  \__,_/\___/\___/____/  
- *                                                        
+ *     _/ // / / / /_/  __/ /  / __/ /_/ / /__/  __(__  )
+ *    /___/_/ /_/\__/\___/_/  /_/  \__,_/\___/\___/____/
+ *
  */
 
 public Action L4D2_OnFirstSurvivorLeftSafeArea(int client) {
@@ -210,7 +211,7 @@ public Action L4D2_OnReplaceTank(int tank, int new_tank) {
   NyxMsgDebug("L4D_OnReplaceTank(tank: %N, newtank: %N)", tank, new_tank);
   Player player = new Player(tank);
   player.TransferHealCount(new Player(new_tank));
-  
+
   return Plugin_Continue;
 }
 
@@ -263,23 +264,23 @@ public Action L4D2_OnSwapTeams() {
 }
 
 /***
- *      _______                         
+ *      _______
  *     /_  __(_)___ ___  ___  __________
  *      / / / / __ `__ \/ _ \/ ___/ ___/
- *     / / / / / / / / /  __/ /  (__  ) 
- *    /_/ /_/_/ /_/ /_/\___/_/  /____/  
- *                                      
+ *     / / / / / / / / /  __/ /  (__  )
+ *    /_/ /_/_/ /_/ /_/\___/_/  /____/
+ *
  */
 
 
 
 /***
- *        ______                 __      
+ *        ______                 __
  *       / ____/   _____  ____  / /______
  *      / __/ | | / / _ \/ __ \/ __/ ___/
- *     / /___ | |/ /  __/ / / / /_(__  ) 
- *    /_____/ |___/\___/_/ /_/\__/____/  
- *                                       
+ *     / /___ | |/ /  __/ / / / /_(__  )
+ *    /_____/ |___/\___/_/ /_/\__/____/
+ *
  */
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast) {
@@ -290,7 +291,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
   if (g_hConVars[ConVar_Charity].BoolValue) {
     for (int i = 1; i <= MaxClients; i++) {
       if (!IsValidClient(i)) continue;
-      
+
       Player player = new Player(i);
       if (player.Points < g_hConVars[ConVar_StartPoints].IntValue) {
         player.Points = g_hConVars[ConVar_StartPoints].IntValue;
@@ -302,12 +303,12 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 }
 
 /***
- *        ___       __          _          ______                                          __    
+ *        ___       __          _          ______                                          __
  *       /   | ____/ /___ ___  (_)___     / ____/___  ____ ___  ____ ___  ____ _____  ____/ /____
  *      / /| |/ __  / __ `__ \/ / __ \   / /   / __ \/ __ `__ \/ __ `__ \/ __ `/ __ \/ __  / ___/
- *     / ___ / /_/ / / / / / / / / / /  / /___/ /_/ / / / / / / / / / / / /_/ / / / / /_/ (__  ) 
- *    /_/  |_\__,_/_/ /_/ /_/_/_/ /_/   \____/\____/_/ /_/ /_/_/ /_/ /_/\__,_/_/ /_/\__,_/____/  
- *                                                                                               
+ *     / ___ / /_/ / / / / / / / / / /  / /___/ /_/ / / / / / / / / / / / /_/ / / / / /_/ (__  )
+ *    /_/  |_\__,_/_/ /_/ /_/_/_/ /_/   \____/\____/_/ /_/ /_/_/ /_/ /_/\__,_/_/ /_/\__,_/____/
+ *
  */
 
 public Action AdmCmd_SetPoints(int client, int args) {
@@ -342,12 +343,12 @@ public Action AdmCmd_SetPoints(int client, int args) {
 }
 
 /***
- *       ______                       __        ______                                          __    
+ *       ______                       __        ______                                          __
  *      / ____/___  ____  _________  / /__     / ____/___  ____ ___  ____ ___  ____ _____  ____/ /____
  *     / /   / __ \/ __ \/ ___/ __ \/ / _ \   / /   / __ \/ __ `__ \/ __ `__ \/ __ `/ __ \/ __  / ___/
- *    / /___/ /_/ / / / (__  ) /_/ / /  __/  / /___/ /_/ / / / / / / / / / / / /_/ / / / / /_/ (__  ) 
- *    \____/\____/_/ /_/____/\____/_/\___/   \____/\____/_/ /_/ /_/_/ /_/ /_/\__,_/_/ /_/\__,_/____/  
- *                                                                                                    
+ *    / /___/ /_/ / / / (__  ) /_/ / /  __/  / /___/ /_/ / / / / / / / / / / / /_/ / / / / /_/ (__  )
+ *    \____/\____/_/ /_/____/\____/_/\___/   \____/\____/_/ /_/ /_/_/ /_/ /_/\__,_/_/ /_/\__,_/____/
+ *
  */
 
 public Action ConCmd_Buy(int client, int args) {
@@ -376,7 +377,7 @@ public Action ConCmd_Buy(int client, int args) {
 
   if (IsPlayerInfected(client)) {
     L4D2ClassType class = L4D2_StringToClass(item[Catalog_Item]);
-    
+
     if (class != L4D2Class_Witch && class != L4D2Class_Unknown) {
       if (IsPlayerAlive(client)) {
         if (IsPlayerGhost(client)) {
@@ -424,12 +425,12 @@ public Action ConCmd_Buy(int client, int args) {
         return Plugin_Handled;
       }
     }
-    
+
     if (!L4D2_IsClassAllowed(class)) {
       NyxPrintToTeam(GetClientTeam(client), "%t", "Class Limit Reached", item[Catalog_Name]);
       return Plugin_Handled;
     }
-    
+
     BuyItem(client, client, item);
     NyxPrintToTeam(GetClientTeam(client), "%t", "Spawned", client, item[Catalog_Name]);
     return Plugin_Handled;
@@ -544,12 +545,12 @@ public Action ConCmd_BuyAgain(int client, int args) {
 }
 
 /***
- *        __  ___                     
+ *        __  ___
  *       /  |/  /__  ____  __  _______
  *      / /|_/ / _ \/ __ \/ / / / ___/
- *     / /  / /  __/ / / / /_/ (__  ) 
- *    /_/  /_/\___/_/ /_/\__,_/____/  
- *                                    
+ *     / /  / /  __/ / / / /_/ (__  )
+ *    /_/  /_/\___/_/ /_/\__,_/____/
+ *
  */
 
 void Display_GivePointsMenu(int client) {
@@ -583,12 +584,12 @@ public int MenuHandler_GivePoints(Menu menu, MenuAction action, int param1, int 
       Display_GiveAmountMenu(param1);
       return;
     }
-    
+
     if (IsValidClient(param1)) {
       Display_GivePointsMenu(param1);
     }
   }
-  
+
   return;
 }
 
@@ -642,7 +643,7 @@ public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int 
       } else {
         int spent = (new Player(target)).GivePoints(amount);
         player.Points -= spent;
-        
+
         NyxPrintToTeam(GetClientTeam(param1), "%t", "Sent Points", param1, spent, target);
         NyxPrintToChat(param1, "%t", "Points Left", player.Points);
 
@@ -651,12 +652,12 @@ public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int 
         }
       }
     }
-    
+
     if (IsValidClient(param1)) {
       Display_GivePointsMenu(param1);
     }
   }
-  
+
   return;
 }
 
@@ -664,9 +665,9 @@ stock int AddTeamToMenu(Menu menu, int client) {
   char user_id[12];
   char name[MAX_NAME_LENGTH];
   char display[MAX_NAME_LENGTH + 12];
-  
+
   int num_clients;
-  
+
   for (int i = 1; i <= MaxClients; i++) {
     if (!IsValidClient(i)) continue;
     if (i == client) continue;
@@ -679,17 +680,17 @@ stock int AddTeamToMenu(Menu menu, int client) {
 
     num_clients++;
   }
-  
+
   return num_clients;
 }
 
 /***
- *        ______                 __  _                 
+ *        ______                 __  _
  *       / ____/_  ______  _____/ /_(_)___  ____  _____
  *      / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
- *     / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  ) 
- *    /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/  
- *                                                     
+ *     / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+ *    /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+ *
  */
 
 bool CanBuy(int client, any[eCatalog] item) {
@@ -698,7 +699,7 @@ bool CanBuy(int client, any[eCatalog] item) {
   // do we have anough dosh?
   if (player.Points < item[Catalog_Cost]) {
     if (g_hConVars[ConVar_AnnounceNeeds].BoolValue) {
-      NyxPrintToTeam(GetClientTeam(client), "%t", "Insufficient Funds Announce", 
+      NyxPrintToTeam(GetClientTeam(client), "%t", "Insufficient Funds Announce",
           client, item[Catalog_Cost] - player.Points, item[Catalog_Name]);
     } else {
       NyxPrintToChat(client, "%t", "Insufficient Funds",
@@ -828,7 +829,7 @@ void BuyItem(int buyer, int receiver, any[eCatalog] item, bool dontRun=false) {
       g_iSpawnCount[class]++;
     }
   }
-  
+
   if (StrEqual(item[Catalog_Item], "health", false)) {
     player.HealCount++;
   }
