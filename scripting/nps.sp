@@ -363,7 +363,7 @@ public Action ConCmd_Buy(int client, int args) {
   }
 
   char search[32];
-  GetCmdArg(1, search, sizeof(search));
+  GetCmdArgString(search, sizeof(search));
 
   any item[eCatalog];
   if (!FindClientItem(client, search, item)) {
