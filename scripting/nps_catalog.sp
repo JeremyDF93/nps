@@ -82,6 +82,7 @@ public int Native_FindItem(Handle plugin, int numArgs) {
   }
 
   bool found;
+  char shortcuts[8][32];
   do { // category
     BuildItem(g_hConfig, item);
 
@@ -102,17 +103,13 @@ public int Native_FindItem(Handle plugin, int numArgs) {
       } else if (strcmp(item[Catalog_Name], name, false) == 0) {
         found = true;
       }
-      char buffers[8][32];
-      int num = ExplodeString(item[Catalog_Shortcut], ",", buffers, 8, 32);
+
+      int num = ExplodeString(item[Catalog_Shortcut], ",", shortcuts, 8, 32);
       for (int i = 0; i < num; i++) {
-        TrimString(buffers[i]);
-        if (strcmp(buffers[i], name, false) == 0) {
+        TrimString(shortcuts[i]);
+        if (strcmp(shortcuts[i], name, false) == 0) {
           found = true;
         }
-      }
-
-      if (strcmp(item[Catalog_Shortcut], name, false) == 0) {
-        found = true;
       }
 
       if (found) {
