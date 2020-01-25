@@ -94,7 +94,7 @@ public int Native_FindItem(Handle plugin, int numArgs) {
     }
 
     do { // item
-      BuildItem(g_hConfig, item);
+      BuildItem(g_hConfig, item, true);
 
       g_hConfig.GetSectionName(item[Catalog_Item], sizeof(item[Catalog_Item]));
 
@@ -184,6 +184,8 @@ public Action AdmCmd_DebugCatalog(int client, int args) {
         item[Catalog_Limit],
         item[Catalog_Announce],
         item[Catalog_AnnouncePhrase]);
+    NyxMsgReply(client, "must_be_incapacitated: %b",
+        item[Catalog_MustBeIncapacitated]);
   } else {
     NyxMsgReply(client, "'%s' was not found", name);
   }
@@ -200,16 +202,30 @@ public Action AdmCmd_DebugCatalog(int client, int args) {
  *
  */
 
-void BuildItem(KeyValues kv, any[eCatalog] item) {
-  kv.GetString("name", item[Catalog_Name], sizeof(item[Catalog_Name]), item[Catalog_Item]);
-  kv.GetString("shortcut", item[Catalog_Shortcut], sizeof(item[Catalog_Shortcut]), item[Catalog_Shortcut]);
-  kv.GetString("command", item[Catalog_Command], sizeof(item[Catalog_Command]), item[Catalog_Command]);
-  kv.GetString("command_args", item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]), item[Catalog_CommandArgs]);
-  kv.GetString("team", item[Catalog_Team], sizeof(item[Catalog_Team]), item[Catalog_Team]);
-  item[Catalog_Cost] = kv.GetNum("cost", item[Catalog_Cost]);
-  item[Catalog_CostMultiplierTank] = kv.GetFloat("cost_multiplier_tank", item[Catalog_CostMultiplierTank]);
-  item[Catalog_Limit] = kv.GetNum("limit", item[Catalog_Limit]);
-  item[Catalog_Announce] = (kv.GetNum("announce", item[Catalog_Announce]) == 1);
-  kv.GetString("announce_phrase", item[Catalog_AnnouncePhrase], sizeof(item[Catalog_AnnouncePhrase]), item[Catalog_AnnouncePhrase]);
-  item[Catalog_MustBeIncapacitated] = (kv.GetNum("must_be_incapacitated", item[Catalog_MustBeIncapacitated]) == 1);
+void BuildItem(KeyValues kv, any[eCatalog] item, bool subKey=false) {
+  if (subKey) {
+    kv.GetString("name", item[Catalog_Name], sizeof(item[Catalog_Name]), item[Catalog_Item]);
+    kv.GetString("shortcut", item[Catalog_Shortcut], sizeof(item[Catalog_Shortcut]), item[Catalog_Shortcut]);
+    kv.GetString("command", item[Catalog_Command], sizeof(item[Catalog_Command]), item[Catalog_Command]);
+    kv.GetString("command_args", item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]), item[Catalog_CommandArgs]);
+    kv.GetString("team", item[Catalog_Team], sizeof(item[Catalog_Team]), item[Catalog_Team]);
+    item[Catalog_Cost] = kv.GetNum("cost", item[Catalog_Cost]);
+    item[Catalog_CostMultiplierTank] = kv.GetFloat("cost_multiplier_tank", item[Catalog_CostMultiplierTank]);
+    item[Catalog_Limit] = kv.GetNum("limit", item[Catalog_Limit]);
+    item[Catalog_Announce] = (kv.GetNum("announce", item[Catalog_Announce]) == 1);
+    kv.GetString("announce_phrase", item[Catalog_AnnouncePhrase], sizeof(item[Catalog_AnnouncePhrase]), item[Catalog_AnnouncePhrase]);
+    item[Catalog_MustBeIncapacitated] = (kv.GetNum("must_be_incapacitated", item[Catalog_MustBeIncapacitated]) == 1);
+  } else {
+    kv.GetString("name", item[Catalog_Name], sizeof(item[Catalog_Name]));
+    kv.GetString("shortcut", item[Catalog_Shortcut], sizeof(item[Catalog_Shortcut]));
+    kv.GetString("command", item[Catalog_Command], sizeof(item[Catalog_Command]));
+    kv.GetString("command_args", item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]));
+    kv.GetString("team", item[Catalog_Team], sizeof(item[Catalog_Team]));
+    item[Catalog_Cost] = kv.GetNum("cost", item[Catalog_Cost]);
+    item[Catalog_CostMultiplierTank] = kv.GetFloat("cost_multiplier_tank");
+    item[Catalog_Limit] = kv.GetNum("limit");
+    item[Catalog_Announce] = (kv.GetNum("announce") == 1);
+    kv.GetString("announce_phrase", item[Catalog_AnnouncePhrase], sizeof(item[Catalog_AnnouncePhrase]));
+    item[Catalog_MustBeIncapacitated] = (kv.GetNum("must_be_incapacitated") == 1);
+  }
 }
