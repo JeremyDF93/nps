@@ -4,12 +4,12 @@
 #define _nps_catalog_included
 
 /***
- *        ______                          
+ *        ______
  *       / ____/___  __  ______ ___  _____
  *      / __/ / __ \/ / / / __ `__ \/ ___/
- *     / /___/ / / / /_/ / / / / / (__  ) 
- *    /_____/_/ /_/\__,_/_/ /_/ /_/____/  
- *                                        
+ *     / /___/ / / / /_/ / / / / / (__  )
+ *    /_____/_/ /_/\__,_/_/ /_/ /_/____/
+ *
  */
 
 enum eCatalog {
@@ -22,7 +22,7 @@ enum eCatalog {
   String:Catalog_CommandType[64],
   String:Catalog_Team[16],
   Catalog_Cost,
-  Catalog_CostMultiplierTank,
+  Float:Catalog_CostMultiplierTank,
   Catalog_Limit,
   bool:Catalog_Announce,
   bool:Catalog_MustBeIncapacitated,
@@ -30,12 +30,12 @@ enum eCatalog {
 }
 
 /***
- *        _   __      __  _                
+ *        _   __      __  _
  *       / | / /___ _/ /_(_)   _____  _____
  *      /  |/ / __ `/ __/ / | / / _ \/ ___/
- *     / /|  / /_/ / /_/ /| |/ /  __(__  ) 
- *    /_/ |_/\__,_/\__/_/ |___/\___/____/  
- *                                         
+ *     / /|  / /_/ / /_/ /| |/ /  __(__  )
+ *    /_/ |_/\__,_/\__/_/ |___/\___/____/
+ *
  */
 
 native bool FindItem(const char[] name, any[eCatalog] item);
