@@ -74,7 +74,7 @@ public void OnPluginStart() {
 
 public int Native_FindItem(Handle plugin, int numArgs) {
   char name[64]; GetNativeString(1, name, sizeof(name));
-  any item[eCatalog], draft[eCatalog];
+  any item[eCatalog];
 
   g_hConfig.Rewind();
   if (!g_hConfig.GotoFirstSubKey()) {
@@ -84,6 +84,7 @@ public int Native_FindItem(Handle plugin, int numArgs) {
   bool found;
   char shortcuts[8][32];
   do { // category
+    any draft[eCatalog];
     BuildItem(g_hConfig, draft, draft);
 
     g_hConfig.GetSectionName(item[Catalog_Category], sizeof(item[Catalog_Category]));
