@@ -109,6 +109,7 @@ public int Native_FindItem(Handle plugin, int numArgs) {
         TrimString(shortcuts[i]);
         if (strcmp(shortcuts[i], name, false) == 0) {
           found = true;
+          break;
         }
       }
 
