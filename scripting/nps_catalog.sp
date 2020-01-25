@@ -184,7 +184,7 @@ public Action AdmCmd_DebugCatalog(int client, int args) {
         item[Catalog_Limit],
         item[Catalog_Announce],
         item[Catalog_AnnouncePhrase]);
-    NyxMsgReply(client, "must_be_incapacitated: %b",
+    NyxMsgReply(client, "MustBeIncapacitated: %b",
         item[Catalog_MustBeIncapacitated]);
   } else {
     NyxMsgReply(client, "'%s' was not found", name);
