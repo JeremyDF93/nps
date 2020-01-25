@@ -74,7 +74,7 @@ public void OnPluginStart() {
 
 public int Native_FindItem(Handle plugin, int numArgs) {
   char name[64]; GetNativeString(1, name, sizeof(name));
-  any item[eCatalog];
+  any item[eCatalog], draft[eCatalog];
 
   g_hConfig.Rewind();
   if (!g_hConfig.GotoFirstSubKey()) {
@@ -84,7 +84,7 @@ public int Native_FindItem(Handle plugin, int numArgs) {
   bool found;
   char shortcuts[8][32];
   do { // category
-    BuildItem(g_hConfig, item);
+    BuildItem(g_hConfig, draft, draft);
 
     g_hConfig.GetSectionName(item[Catalog_Category], sizeof(item[Catalog_Category]));
 
@@ -94,7 +94,7 @@ public int Native_FindItem(Handle plugin, int numArgs) {
     }
 
     do { // item
-      BuildItem(g_hConfig, item, true);
+      BuildItem(g_hConfig, item, draft);
 
       g_hConfig.GetSectionName(item[Catalog_Item], sizeof(item[Catalog_Item]));
 
@@ -202,30 +202,16 @@ public Action AdmCmd_DebugCatalog(int client, int args) {
  *
  */
 
-void BuildItem(KeyValues kv, any[eCatalog] item, bool subKey=false) {
-  if (subKey) {
-    kv.GetString("name", item[Catalog_Name], sizeof(item[Catalog_Name]), item[Catalog_Item]);
-    kv.GetString("shortcut", item[Catalog_Shortcut], sizeof(item[Catalog_Shortcut]), item[Catalog_Shortcut]);
-    kv.GetString("command", item[Catalog_Command], sizeof(item[Catalog_Command]), item[Catalog_Command]);
-    kv.GetString("command_args", item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]), item[Catalog_CommandArgs]);
-    kv.GetString("team", item[Catalog_Team], sizeof(item[Catalog_Team]), item[Catalog_Team]);
-    item[Catalog_Cost] = kv.GetNum("cost", item[Catalog_Cost]);
-    item[Catalog_CostMultiplierTank] = kv.GetFloat("cost_multiplier_tank", item[Catalog_CostMultiplierTank]);
-    item[Catalog_Limit] = kv.GetNum("limit", item[Catalog_Limit]);
-    item[Catalog_Announce] = (kv.GetNum("announce", item[Catalog_Announce]) == 1);
-    kv.GetString("announce_phrase", item[Catalog_AnnouncePhrase], sizeof(item[Catalog_AnnouncePhrase]), item[Catalog_AnnouncePhrase]);
-    item[Catalog_MustBeIncapacitated] = (kv.GetNum("must_be_incapacitated", item[Catalog_MustBeIncapacitated]) == 1);
-  } else {
-    kv.GetString("name", item[Catalog_Name], sizeof(item[Catalog_Name]));
-    kv.GetString("shortcut", item[Catalog_Shortcut], sizeof(item[Catalog_Shortcut]));
-    kv.GetString("command", item[Catalog_Command], sizeof(item[Catalog_Command]));
-    kv.GetString("command_args", item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]));
-    kv.GetString("team", item[Catalog_Team], sizeof(item[Catalog_Team]));
-    item[Catalog_Cost] = kv.GetNum("cost", item[Catalog_Cost]);
-    item[Catalog_CostMultiplierTank] = kv.GetFloat("cost_multiplier_tank");
-    item[Catalog_Limit] = kv.GetNum("limit");
-    item[Catalog_Announce] = (kv.GetNum("announce") == 1);
-    kv.GetString("announce_phrase", item[Catalog_AnnouncePhrase], sizeof(item[Catalog_AnnouncePhrase]));
-    item[Catalog_MustBeIncapacitated] = (kv.GetNum("must_be_incapacitated") == 1);
-  }
+void BuildItem(KeyValues kv, any[eCatalog] item, any[eCatalog] def) {
+  kv.GetString("name", item[Catalog_Name], sizeof(item[Catalog_Name]), def[Catalog_Item]);
+  kv.GetString("shortcut", item[Catalog_Shortcut], sizeof(item[Catalog_Shortcut]), def[Catalog_Shortcut]);
+  kv.GetString("command", item[Catalog_Command], sizeof(item[Catalog_Command]), def[Catalog_Command]);
+  kv.GetString("command_args", item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]), def[Catalog_CommandArgs]);
+  kv.GetString("team", item[Catalog_Team], sizeof(item[Catalog_Team]), def[Catalog_Team]);
+  item[Catalog_Cost] = kv.GetNum("cost", item[Catalog_Cost]);
+  item[Catalog_CostMultiplierTank] = kv.GetFloat("cost_multiplier_tank", def[Catalog_CostMultiplierTank]);
+  item[Catalog_Limit] = kv.GetNum("limit", def[Catalog_Limit]);
+  item[Catalog_Announce] = (kv.GetNum("announce", def[Catalog_Announce]) == 1);
+  kv.GetString("announce_phrase", item[Catalog_AnnouncePhrase], sizeof(item[Catalog_AnnouncePhrase]), def[Catalog_AnnouncePhrase]);
+  item[Catalog_MustBeIncapacitated] = (kv.GetNum("must_be_incapacitated", def[Catalog_MustBeIncapacitated]) == 1);
 }
