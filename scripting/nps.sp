@@ -750,7 +750,9 @@ bool CanBuy(int client, any[eCatalog] item) {
       }
     }
     if (!IsPlayerIncapacitated(client)) {
-      if (GetEntProp(client, Prop_Data, "m_iHealth") >= GetEntProp(client, Prop_Data, "m_iMaxHealth")) {
+      int m_iHealth = GetEntProp(client, Prop_Data, "m_iHealth");
+      int m_iMaxHealth = GetEntProp(client, Prop_Data, "m_iMaxHealth");
+      if (float(m_iHealth) / float(m_iMaxHealth) >= 0.8) {
         NyxPrintToChat(client, "%t", "Health is Full");
         return false;
       }
