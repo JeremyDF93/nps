@@ -16,7 +16,7 @@ enum eCatalog {
   String:Catalog_Category[64],
   String:Catalog_Item[64],
   String:Catalog_Name[64],
-  String:Catalog_Shortcut[16],
+  String:Catalog_Shortcut[255],
   String:Catalog_Command[64],
   String:Catalog_CommandArgs[64],
   String:Catalog_CommandType[64],
