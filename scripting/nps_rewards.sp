@@ -20,12 +20,12 @@ public Plugin myinfo = {
 };
 
 /***
- *        ______                          
+ *        ______
  *       / ____/___  __  ______ ___  _____
  *      / __/ / __ \/ / / / __ `__ \/ ___/
- *     / /___/ / / / /_/ / / / / / (__  ) 
- *    /_____/_/ /_/\__,_/_/ /_/ /_/____/  
- *                                        
+ *     / /___/ / / / /_/ / / / / / (__  )
+ *    /_____/_/ /_/\__,_/_/ /_/ /_/____/
+ *
  */
 
 enum NyxError {
@@ -42,12 +42,12 @@ enum NyxConVar {
 }
 
 /***
- *       ________      __          __    
+ *       ________      __          __
  *      / ____/ /___  / /_  ____ _/ /____
  *     / / __/ / __ \/ __ \/ __ `/ / ___/
- *    / /_/ / / /_/ / /_/ / /_/ / (__  ) 
- *    \____/_/\____/_.___/\__,_/_/____/  
- *                                       
+ *    / /_/ / / /_/ / /_/ / /_/ / (__  )
+ *    \____/_/\____/_.___/\__,_/_/____/
+ *
  */
 
 KeyValues g_hConfig;
@@ -56,23 +56,23 @@ Handle g_hMaxPointsTimer[MAXPLAYERS + 1];
 bool g_bMaxPointsWarning[MAXPLAYERS + 1];
 
 /***
- *       ______          _    __               
+ *       ______          _    __
  *      / ____/___  ____| |  / /___ ___________
  *     / /   / __ \/ __ \ | / / __ `/ ___/ ___/
- *    / /___/ /_/ / / / / |/ / /_/ / /  (__  ) 
- *    \____/\____/_/ /_/|___/\__,_/_/  /____/  
- *                                             
+ *    / /___/ /_/ / / / / |/ / /_/ / /  (__  )
+ *    \____/\____/_/ /_/|___/\__,_/_/  /____/
+ *
  */
 
 ConVar g_hConVars[NyxConVar];
 
 /***
- *        ____  __            _          ____      __            ____              
- *       / __ \/ /_  ______ _(_)___     /  _/___  / /____  _____/ __/___ _________ 
+ *        ____  __            _          ____      __            ____
+ *       / __ \/ /_  ______ _(_)___     /  _/___  / /____  _____/ __/___ _________
  *      / /_/ / / / / / __ `/ / __ \    / // __ \/ __/ _ \/ ___/ /_/ __ `/ ___/ _ \
  *     / ____/ / /_/ / /_/ / / / / /  _/ // / / / /_/  __/ /  / __/ /_/ / /__/  __/
- *    /_/   /_/\__,_/\__, /_/_/ /_/  /___/_/ /_/\__/\___/_/  /_/  \__,_/\___/\___/ 
- *                  /____/                                                         
+ *    /_/   /_/\__,_/\__, /_/_/ /_/  /___/_/ /_/\__/\___/_/  /_/  \__,_/\___/\___/
+ *                  /____/
  */
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
@@ -125,7 +125,7 @@ public void OnPluginStart() {
     if (strcmp(buffer, "rewards") != 0) {
       SetFailState("Error in %s: Couldn't find section '%s'", path, "rewards");
     }
-    
+
     g_hConfig.Rewind();
   } else {
     SetFailState("Error in %s: File not found, corrupt or in the wrong format", path);
@@ -139,12 +139,12 @@ public void OnAllPluginsLoaded() {
 }
 
 /***
- *        ____      __            ____                    
+ *        ____      __            ____
  *       /  _/___  / /____  _____/ __/___ _________  _____
  *       / // __ \/ __/ _ \/ ___/ /_/ __ `/ ___/ _ \/ ___/
- *     _/ // / / / /_/  __/ /  / __/ /_/ / /__/  __(__  ) 
- *    /___/_/ /_/\__/\___/_/  /_/  \__,_/\___/\___/____/  
- *                                                        
+ *     _/ // / / / /_/  __/ /  / __/ /_/ / /__/  __(__  )
+ *    /___/_/ /_/\__/\___/_/  /_/  \__,_/\___/\___/____/
+ *
  */
 
 public Action L4D2_OnEndVersusModeRound(bool countSurvivors) {
@@ -170,12 +170,12 @@ public Action L4D2_OnEndVersusModeRound(bool countSurvivors) {
 }
 
 /***
- *        ______                 __      
+ *        ______                 __
  *       / ____/   _____  ____  / /______
  *      / __/ | | / / _ \/ __ \/ __/ ___/
- *     / /___ | |/ /  __/ / / / /_(__  ) 
- *    /_____/ |___/\___/_/ /_/\__/____/  
- *                                       
+ *     / /___ | |/ /  __/ / / / /_(__  )
+ *    /_____/ |___/\___/_/ /_/\__/____/
+ *
  */
 
  public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
@@ -325,7 +325,7 @@ public Action Event_InfectedDeath(Event event, const char[] name, bool dontBroad
     }
 
     player.KillCount++;
-    
+
     streak = g_hConVars[ConVar_KillStreak].IntValue;
     if (streak > 0) {
       if ((player.KillCount % streak) == 0) {
@@ -550,7 +550,7 @@ public Action Event_DefibrillatorUsed(Event event, const char[] name, bool dontB
   int client = GetClientOfUserId(event.GetInt("userid"));
   int subject = GetClientOfUserId(event.GetInt("subject"));
 
-  if (IsValidClient(client)) return Plugin_Continue;
+  if (!IsValidClient(client)) return Plugin_Continue;
   if (IsPlayerSurvivor(client)) {
     Player player = new Player(client);
     if (RewardPoints(player, "defibrillator_used")) {
@@ -604,12 +604,12 @@ public Action Event_FinaleWin(Event event, const char[] name, bool dontBroadcast
 }
 
 /***
- *      _______                         
+ *      _______
  *     /_  __(_)___ ___  ___  __________
  *      / / / / __ `__ \/ _ \/ ___/ ___/
- *     / / / / / / / / /  __/ /  (__  ) 
- *    /_/ /_/_/ /_/ /_/\___/_/  /____/  
- *                                      
+ *     / / / / / / / / /  __/ /  (__  )
+ *    /_/ /_/_/ /_/ /_/\___/_/  /____/
+ *
  */
 
 public Action Timer_MaxPoints(Handle timer, any client) {
@@ -618,12 +618,12 @@ public Action Timer_MaxPoints(Handle timer, any client) {
 }
 
 /***
- *        ______                 __  _                 
+ *        ______                 __  _
  *       / ____/_  ______  _____/ /_(_)___  ____  _____
  *      / /_  / / / / __ \/ ___/ __/ / __ \/ __ \/ ___/
- *     / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  ) 
- *    /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/  
- *                                                     
+ *     / __/ / /_/ / / / / /__/ /_/ / /_/ / / / (__  )
+ *    /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
+ *
  */
 
 bool RewardPoints(Player player, const char[] reward, const char[] type="reward") {
