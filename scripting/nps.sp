@@ -823,7 +823,8 @@ void BuyItem(int buyer, int receiver, any[eCatalog] item, bool dontRun=false) {
 
   if (StrEqual(item[Catalog_Category], "infected", false)) {
     if (item[Catalog_Announce]) {
-      NyxPrintToAll("%t", "Announce Special Infected Purchase", buyer, item[Catalog_Name]);
+      char buffer[255]; Format(buffer, sizeof(buffer), "Announce %s Purchase", item[Catalog_Name]);
+      NyxPrintToAll("%t", buffer, buyer, item[Catalog_Name]);
     }
 
     L4D2ClassType class = L4D2_StringToClass(item[Catalog_Item]);

@@ -89,7 +89,7 @@
     "#format"   "{1:N},{2:i}"
     "en"        "{lightgreen}{1}{default} currently has {olive}{2}{default} points."
   }
-  
+
   "Killed Special Infected"
   {
     "#format"   "{1:i},{2:N}"
@@ -261,7 +261,27 @@
   {
     "en"        "Tank is not allowed in final."
   }
-  "Announce Special Infected Purchase"
+  "Announce Witch Purchase"
+  {
+    "#format"   "{1:N},{2:s}"
+    "en"        "{lightgreen}{1}{default} spawned a {lightgreen}{2}{default}"
+  }
+  "Announce Tank Purchase"
+  {
+    "#format"   "{1:N},{2:s}"
+    "en"        "{lightgreen}{1}{default} spawned a {lightgreen}{2}{default}"
+  }
+  "Announce Horde Purchase"
+  {
+    "#format"   "{1:N},{2:s}"
+    "en"        "{lightgreen}{1}{default} started a {lightgreen}{2}{default}"
+  }
+  "Announce Mob Purchase"
+  {
+    "#format"   "{1:N},{2:s}"
+    "en"        "{lightgreen}{1}{default} spawned a {lightgreen}{2}{default}"
+  }
+  "Announce Uncommon Mob Purchase"
   {
     "#format"   "{1:N},{2:s}"
     "en"        "{lightgreen}{1}{default} spawned a {lightgreen}{2}{default}"
