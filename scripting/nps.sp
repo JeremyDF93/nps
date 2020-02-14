@@ -506,16 +506,24 @@ public Action ConCmd_ShowTeamPoints(int client, int args) {
 }
 
 public Action ConCmd_Heal(int client, int args) {
-  if (IsValidClient(client)) {
-    any item[eCatalog];
-    if (!FindClientItem(client, "heal", item)) {
-      NyxPrintToChat(client, "%t", "Item Doesn't Exist", "heal");
-      return Plugin_Handled;
-    }
+  int target = client;
+  if (args > 1) {
+    target = GetCmdTarget(1, client, false, false);
+  }
 
-    if (CanBuy(client, item)) {
-      BuyItem(client, client, item);
-    }
+  if (!IsValidClient(target))
+    return Plugin_Handled;
+  if (!IsValidClient(client))
+    return Plugin_Handled;
+
+  any item[eCatalog];
+  if (!FindClientItem(client, "heal", item)) {
+    NyxPrintToChat(client, "%t", "Item Doesn't Exist", "heal");
+    return Plugin_Handled;
+  }
+
+  if (CanBuy(client, item)) {
+    BuyItem(client, target, item);
   }
 
   return Plugin_Handled;
