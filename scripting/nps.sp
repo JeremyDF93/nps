@@ -507,7 +507,7 @@ public Action ConCmd_ShowTeamPoints(int client, int args) {
 
 public Action ConCmd_Heal(int client, int args) {
   int target = client;
-  if (args > 1) {
+  if (args == 1) {
     target = GetCmdTarget(1, client, false, false);
   }
 
