@@ -38,7 +38,9 @@ enum NyxError {
 enum NyxConVar {
   ConVar:ConVar_MaxPoints,
   ConVar:ConVar_KillStreak,
-  ConVar:ConVar_HeadshotStreak
+  ConVar:ConVar_HeadshotStreak,
+  ConVar:ConVar_BurnedTankTimer,
+  ConVar:ConVar_BurnedWitchTimer,
 }
 
 /***
@@ -86,6 +88,8 @@ public void OnPluginStart() {
 
   g_hConVars[ConVar_KillStreak] = CreateConVar("nps_killstreak", "25", "Number of infected required to kill in order to get a killstreak.");
   g_hConVars[ConVar_HeadshotStreak] = CreateConVar("nps_headshot_streak", "20", "Number of infected headshots required in order to get a headshot killstreak.");
+  g_hConVars[ConVar_BurnedTankTimer] = CreateConVar("nps_burned_tank_timer", "15", "Amount of time needed to pass before awarding more burn points");
+  g_hConVars[ConVar_BurnedWitchTimer] = CreateConVar("nps_burned_witch_timer", "15", "Amount of time needed to pass before awarding more burn points");
 
   HookEvent("player_spawn", Event_PlayerSpawn);
   HookEvent("player_death", Event_PlayerDeath);
@@ -573,6 +577,7 @@ public Action Event_ZombieIgnited(Event event, const char[] name, bool dontBroad
 
     if (StrEqual("Tank", victimname, false) && !player.BurnedTank) {
       player.BurnedTank = true;
+      CreateTimer(g_hConVars[ConVar_BurnedTankTimer].FloatValue, Timer_BurnedTank, GetClientUserId(player.Index));
 
       if (RewardPoints(player, "burn_tank")) {
         NyxPrintToChat(client, "%t", "Burned Tank", player.Reward);
@@ -581,6 +586,7 @@ public Action Event_ZombieIgnited(Event event, const char[] name, bool dontBroad
 
     if (StrEqual("Witch", victimname, false) && !player.BurnedWitch) {
       player.BurnedWitch = true;
+      CreateTimer(g_hConVars[ConVar_BurnedWitchTimer].FloatValue, Timer_BurnedWitch, GetClientUserId(player.Index));
 
       if (RewardPoints(player, "burn_witch")) {
         NyxPrintToChat(client, "%t", "Burned Witch", player.Reward);
@@ -615,6 +621,22 @@ public Action Event_FinaleWin(Event event, const char[] name, bool dontBroadcast
 public Action Timer_MaxPoints(Handle timer, any client) {
   g_bMaxPointsWarning[client] = false;
   g_hMaxPointsTimer[client] = INVALID_HANDLE;
+}
+
+public Action Timer_BurnedTank(Handle timer, any userid) {
+  int client = GetClientOfUserId(userid);
+  if (IsValidClient(client)) {
+    Player player = new Player(client);
+    player.BurnedTank = false;
+  }
+}
+
+public Action Timer_BurnedWitch(Handle timer, any userid) {
+  int client = GetClientOfUserId(userid);
+  if (IsValidClient(client)) {
+    Player player = new Player(client);
+    player.BurnedWitch = false;
+  }
 }
 
 /***
