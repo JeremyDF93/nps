@@ -544,7 +544,8 @@ public Action ConCmd_Heal(int client, int args) {
     return Plugin_Handled;
   }
 
-  if (CanBuy(client, item)) {
+  char error[255];
+  if (CanAfford(client, item) && CanUse(target, item, error, sizeof(error))) {
     BuyItem(client, target, item);
   }
 
@@ -723,11 +724,20 @@ stock int AddTeamToMenu(Menu menu, int client) {
  *
  */
 
+bool CanAfford(int client, any[eCatalog] item) {
+  Player player = new Player(client);
+  if (player.Points < item[Catalog_Cost]) {
+    return false;
+  }
+
+  return true;
+}
+
 bool CanBuy(int client, any[eCatalog] item) {
   Player player = new Player(client);
 
   // do we have anough dosh?
-  if (player.Points < item[Catalog_Cost]) {
+  if (!CanAfford(client, item)) {
     if (g_hConVars[ConVar_AnnounceNeeds].BoolValue) {
       NyxPrintToTeam(GetClientTeam(client), "%t", "Insufficient Funds Announce",
           client, item[Catalog_Cost] - player.Points, item[Catalog_Name]);
@@ -738,11 +748,20 @@ bool CanBuy(int client, any[eCatalog] item) {
 
     return false;
   }
+  char error[255];
+  bool result = CanUse(client, item, error, sizeof(error));
+  if (!result) NyxPrintToChat(client, error);
+
+  return result;
+}
+
+bool CanUse(int client, any[eCatalog] item, char[] buffer, int maxlength) {
+  Player player = new Player(client);
 
   // is the item team restricted?
   if (strlen(item[Catalog_Team]) != 0) {
     if (L4D2_GetClientTeam(client) != L4D2_StringToTeam(item[Catalog_Team])) {
-      NyxPrintToChat(client, "%t", "Item Wrong Team");
+      Format(buffer, maxlength, "%t", "Item Wrong Team");
       return false;
     }
   }
@@ -750,7 +769,8 @@ bool CanBuy(int client, any[eCatalog] item) {
   // do we need to be alive?
   if (!IsPlayerAlive(client)) {
     if (IsPlayerSurvivor(client)) {
-      NyxPrintToChat(client, "%t", "Must Be Alive");
+      //NyxPrintToChat(client, "%t", "Must Be Alive");
+      Format(buffer, maxlength, "%t", "Must Be Alive");
       return false;
     }
   }
@@ -758,7 +778,8 @@ bool CanBuy(int client, any[eCatalog] item) {
   // do we need to check if we're incapacitated?
   if (!IsPlayerIncapacitated(client) && item[Catalog_MustBeIncapacitated]) {
     if (IsPlayerSurvivor(client)) {
-      NyxPrintToChat(client, "%t", "Must Be Incapacitated");
+      //NyxPrintToChat(client, "%t", "Must Be Incapacitated");
+      Format(buffer, maxlength, "%t", "Must Be Incapacitated");
       return false;
     }
   }
@@ -766,7 +787,8 @@ bool CanBuy(int client, any[eCatalog] item) {
   // have we reached the buy limit?
   if (item[Catalog_Limit] > 0) {
     if (g_iSpawnCount[L4D2_StringToClass(item[Catalog_Item])] >= item[Catalog_Limit]) {
-      NyxPrintToChat(client, "%t", "Spawn Limit Reached", item[Catalog_Name]);
+      //NyxPrintToChat(client, "%t", "Spawn Limit Reached", item[Catalog_Name]);
+      Format(buffer, maxlength, "%t", "Spawn Limit Reached", item[Catalog_Name]);
       return false;
     }
   }
@@ -775,7 +797,8 @@ bool CanBuy(int client, any[eCatalog] item) {
   if (StrEqual(item[Catalog_Item], "health", false)) {
     if (IsPlayerGrabbed(client)) {
       if (L4D2_GetClientTeam(client) == L4D2Team_Survivor) {
-        NyxPrintToChat(client, "%t", "Must Not Be Grabbed");
+        //NyxPrintToChat(client, "%t", "Must Not Be Grabbed");
+        Format(buffer, maxlength, "%t", "Must Not Be Grabbed");
         return false;
       }
     }
@@ -783,7 +806,8 @@ bool CanBuy(int client, any[eCatalog] item) {
       int m_iHealth = GetEntProp(client, Prop_Data, "m_iHealth");
       int m_iMaxHealth = GetEntProp(client, Prop_Data, "m_iMaxHealth");
       if (float(m_iHealth) / float(m_iMaxHealth) >= 0.8) {
-        NyxPrintToChat(client, "%t", "Health is Full");
+        //NyxPrintToChat(client, "%t", "Health is Full");
+        Format(buffer, maxlength, "%t", "Health is Full");
         return false;
       }
     }
@@ -793,12 +817,14 @@ bool CanBuy(int client, any[eCatalog] item) {
       // tank death loop fix
       if (GetEntProp(client, Prop_Send, "m_nSequence") >= 65) { // start of tank death animation 67-77
         NyxPrintToChat(client, "%t", "Must Be Alive");
+        Format(buffer, maxlength, "%t", "Must Be Alive");
         return false;
       }
 
       if (g_hConVars[ConVar_TankHealLimit].IntValue > 0) {
         if (player.HealCount + 1 > g_hConVars[ConVar_TankHealLimit].IntValue) {
-          NyxPrintToChat(client, "%t", "Heal Limit Reached");
+          //NyxPrintToChat(client, "%t", "Heal Limit Reached");
+          Format(buffer, maxlength, "%t", "Heal Limit Reached");
           return false;
         }
 
@@ -812,7 +838,8 @@ bool CanBuy(int client, any[eCatalog] item) {
   // are we trying to by a tank?
   if (StrEqual(item[Catalog_Item], "tank", false)) {
     if (L4D2_IsMissionFinalMap() && !g_hConVars[ConVar_TankAllowedFinal].BoolValue) {
-      NyxPrintToChat(client, "%t", "Tank Not Allowed in Final");
+      //NyxPrintToChat(client, "%t", "Tank Not Allowed in Final");
+      Format(buffer, maxlength, "%t", "Tank Not Allowed in Final");
       return false;
     }
 
@@ -822,9 +849,11 @@ bool CanBuy(int client, any[eCatalog] item) {
       int seconds = timeLeft % 60;
 
       if (minutes) {
-        NyxPrintToChat(client, "%t", "Tank Allowed in Minutes", minutes);
+        //NyxPrintToChat(client, "%t", "Tank Allowed in Minutes", minutes);
+        Format(buffer, maxlength, "%t", "Tank Allowed in Minutes", minutes);
       } else {
-        NyxPrintToChat(client, "%t", "Tank Allowed in Seconds", seconds);
+        //NyxPrintToChat(client, "%t", "Tank Allowed in Seconds", seconds);
+        Format(buffer, maxlength, "%t", "Tank Allowed in Seconds", seconds);
       }
 
       return false;
