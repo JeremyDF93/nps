@@ -173,7 +173,7 @@
   "Impact Player"
   {
     "#format"   "{1:i},{2:N}"
-    "en"        "{olive}+{1}{default} points awarded for inpacting {lightgreen}{2}{default}."
+    "en"        "{olive}+{1}{default} points awarded for impacting {lightgreen}{2}{default}."
   }
   "Healed Player"
   {
@@ -234,9 +234,19 @@
   {
     "en"        "You have reached the heal limit."
   }
+  "Heal Other"
+  {
+    "#format"   "{1:N},{2:N}"
+    "en"        "{lightgreen}{1}{default} purchased a full heal for {lightgreen}{2}{default}"
+  }
+  "Heal Other Failed"
+  {
+    "#format"   "{1:N}"
+    "en"        "You can not heal {lightgreen}{1}{default} right now."
+  }
   "Tank Heal Limit"
   {
-    "#format"   "{1:N}{2:i},{3:i}"
+    "#format"   "{1:N},{2:i},{3:i}"
     "en"        "{lightgreen}{1}{default} has healed [{olive}{2}{default}/{olive}{3}{default}] times."
   }
   "Bought Nothing"

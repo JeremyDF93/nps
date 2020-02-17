@@ -130,7 +130,6 @@ public void OnMapStart() {
     if (!g_bLateLoad) {
       ResetPlayerStorage();
     }
-    g_bLateLoad = false;
 
     for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
       g_iSpawnCount[i] = 0;
@@ -143,6 +142,7 @@ public void OnMapStart() {
 
   g_iStartTime = 0;
   g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
+  g_bLateLoad = false;
 }
 
 public void OnClientPostAdminCheck(int client) {
@@ -547,6 +547,16 @@ public Action ConCmd_Heal(int client, int args) {
   char error[255];
   if (CanAfford(client, item) && CanUse(target, item, error, sizeof(error))) {
     BuyItem(client, target, item);
+
+    if (client != target) {
+      NyxPrintToTeam(GetClientTeam(client), "%t", "Heal Other", client, target);
+    }
+  } else {
+    if (client == target) {
+      NyxPrintToChat(client, error);
+    } else {
+      NyxPrintToChat(client, "%t", "Heal Other Failed", target);
+    }
   }
 
   return Plugin_Handled;
