@@ -120,6 +120,7 @@ public void OnPluginStart() {
 
   HookEvent("round_start", Event_RoundStart);
   HookEvent("player_spawn", Event_PlayerSpawn);
+  HookEvent("player_incapacitated", Event_PlayerIncapacitated);
 }
 
 public void OnMapStart() {
@@ -307,7 +308,16 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
   int client = GetClientOfUserId(event.GetInt("userid"));
   if (!IsPlayerTank(client)) return Plugin_Continue;
 
-  DisplayInstructorHint(client, "As tank you can heal by pressing the USE key");
+  DisplayInstructorHint(client, "As tank you can heal by pressing the USE key", "icon_button");
+
+  return Plugin_Continue;
+}
+
+public Action Event_PlayerIncapacitated(Event event, const char[] name, bool dontBroadcast) {
+  int victim = GetClientOfUserId(event.GetInt("userid"));
+  if (!IsPlayerSurvivor(victim)) return Plugin_Continue;
+
+  DisplayInstructorHint(victim, "You can heal while you're down with the USE key", "icon_button");
 
   return Plugin_Continue;
 }
