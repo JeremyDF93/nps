@@ -544,6 +544,11 @@ public Action ConCmd_Heal(int client, int args) {
     return Plugin_Handled;
   }
 
+  if (GetClientTeam(client) != GetClientTeam(target)) {
+    NyxPrintToChat(client, "%t", "Heal Wrong Team");
+    return Plugin_Handled;
+  }
+
   char error[255];
   if (CanAfford(client, item) && CanUse(target, item, error, sizeof(error))) {
     BuyItem(client, target, item);

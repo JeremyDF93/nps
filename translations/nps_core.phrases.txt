@@ -18,6 +18,14 @@
   {
     "en"        "You can't give points so someone on the other team!"
   }
+  "Item Wrong Team"
+  {
+    "en"        "You can't give an item to someone on the other team!"
+  }
+  "Heal Wrong Team"
+  {
+    "en"        "You can't heal someone on the other team!"
+  }
   "Sent Zero Points"
   {
     "en"        "You sent zero points."
