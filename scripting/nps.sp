@@ -119,6 +119,7 @@ public void OnPluginStart() {
   g_hConVars[ConVar_Charity] = CreateConVar("nps_charity", "1", "Give players with less than the minimal starting points at the start of a round some points?", _, true, 0.0, true, 1.0);
 
   HookEvent("round_start", Event_RoundStart);
+  HookEvent("player_spawn", Event_PlayerSpawn);
 }
 
 public void OnMapStart() {
@@ -298,6 +299,15 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
       }
     }
   }
+
+  return Plugin_Continue;
+}
+
+public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
+  int client = GetClientOfUserId(event.GetInt("userid"));
+  if (!IsPlayerTank(client)) return Plugin_Continue;
+
+  DisplayInstructorHint(client, "As tank you can heal by pressing the USE key");
 
   return Plugin_Continue;
 }
