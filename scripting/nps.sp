@@ -307,6 +307,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
   int client = GetClientOfUserId(event.GetInt("userid"));
   if (!IsPlayerTank(client)) return Plugin_Continue;
+  if (IsFakeClient(client)) return Plugin_Continue;
 
   DisplayInstructorHint(client, "As tank you can heal by pressing the USE key", "icon_button");
 
@@ -316,6 +317,7 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 public Action Event_PlayerIncapacitated(Event event, const char[] name, bool dontBroadcast) {
   int victim = GetClientOfUserId(event.GetInt("userid"));
   if (!IsPlayerSurvivor(victim)) return Plugin_Continue;
+  if (IsFakeClient(victim)) return Plugin_Continue;
 
   DisplayInstructorHint(victim, "You can heal while you're down with the USE key", "icon_button");
 
