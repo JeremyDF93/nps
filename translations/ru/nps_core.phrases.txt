@@ -1,0 +1,327 @@
+"Phrases"
+{
+  "Reward"
+  {
+    "#format"   "{1:i}"
+    "ru"        "{olive}+{1}{default} получено очков."
+  }
+  "Sent Points"
+  {
+    "#format"   "{1:N},{2:i},{3:N}"
+    "ru"        "{lightgreen}{1}{default} отправил {olive}{2}{default} очков игроку {lightgreen}{3}{default}."
+  }
+  "Sent Self Points"
+  {
+    "ru"        "Вы не можете отправлять очки себе!"
+  }
+  "Sent Wrong Team Points"
+  {
+    "ru"        "Вы не можете давать очки кому-то из другой команды!"
+  }
+  "Item Wrong Team"
+  {
+    "ru"        "Вы не можете отдать предмет кому-то из другой команды!"
+  }
+  "Heal Wrong Team"
+  {
+    "ru"        "Вы не можете лечить кого-то в другой команде!"
+  }
+  "Sent Zero Points"
+  {
+    "ru"        "Вы отправили ноль очков."
+  }
+  "Insufficient Points"
+  {
+    "ru"        "Вам не хватает очков."
+  }
+  "No Points"
+  {
+    "ru"        "У вас нет очков."
+  }
+  "Points Left"
+  {
+    "#format"   "{1:i}"
+    "ru"        "У вас осталось {olive}{1}{default} очков."
+  }
+  "Max Points"
+  {
+    "#format"   "{1:i},{2:i}"
+    "ru"        "Вы получили максимальное количество очков [{red}{1}{default}/{olive}{2}{default}]"
+  }
+  "Item Doesn't Exist"
+  {
+    "#format"   "{1:s}"
+    "ru"        "Предмет '{olive}{1}{default}' невозможно найти!"
+  }
+  "Unable to Give"
+  {
+    "ru"        "Невозможно найти игрока, чтобы передать этот предмет."
+  }
+  "Bought Something For Player"
+  {
+    "#format"   "{1:N},{2:s},{3:N}"
+    "ru"        "{lightgreen}{1}{default} купил {olive}{2}{default} для {lightgreen}{3}{default}."
+  }
+  "Spawned"
+  {
+    "#format"   "{1:N},{2:s}"
+    "ru"        "{lightgreen}{1}{default} Создан {olive}{2}{default}"
+  }
+  "Must Be Alive"
+  {
+    "ru"        "Вы должны быть живы, чтобы сделать это."
+  }
+  "Must Be Dead"
+  {
+    "ru"        "Вы должны быть мертвы, чтобы сделать это."
+  }
+  "Must Be Incapacitated"
+  {
+    "ru"        "Вы должны быть выведены из строя, чтобы сделать это."
+  }
+  "Must Not Be Grabbed"
+  {
+    "ru"        "Вы не можете сделать это, пока вас схватили."
+  }
+  "Item Wrong Team"
+  {
+    "ru"        "Вы можете купить этот предмет только в другой команде!"
+  }
+  "Show Points"
+  {
+    "#format"   "{1:i}"
+    "ru"        "У вас сейчас есть {olive}{1}{default} очков."
+  }
+  "Show Points Other"
+  {
+    "#format"   "{1:N},{2:i}"
+    "ru"        "{lightgreen}{1}{default} сейчас имеет {olive}{2}{default} очков."
+  }
+
+  "Killed Special Infected"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за убийство {lightgreen}{2}{default}."
+  }
+  "Killed Survivor"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за убийство {lightgreen}{2}{default}."
+  }
+  "Hurt Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за причинение вреда игрока {lightgreen}{2}{default}."
+  }
+  "Incapacitated Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за выведение из строя игрока {lightgreen}{2}{default}."
+  }
+  "Bile Tank"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за использование банки рвоты на игроке {lightgreen}{2}{default}."
+  }
+  "Bile Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за извержение рвоты на игрока {lightgreen}{2}{default}."
+  }
+  "Kill Streak"
+  {
+    "#format"   "{1:i},{2:i}"
+    "ru"        "{olive}+{1}{default} очков получено за убийство {olive}{2}{default} заражённых."
+  }
+  "Headshot Streak"
+  {
+    "#format"   "{1:i},{2:i}"
+    "ru"        "{olive}+{1}{default} очков получено за убийство {olive}{2}{default} в голову!"
+  }
+  "Killed Tank"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за убийство {lightgreen}{2}{default}."
+  }
+  "Killed Tank Solo"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за убийство {lightgreen}{2}{default} в одиночку."
+  }
+  "Killed Witch"
+  {
+    "#format"   "{1:i}"
+    "ru"        "{olive}+{1}{default} очков получено за убийство {lightgreen}Ведьмы{default}."
+  }
+  "Killed Witch Oneshot"
+  {
+    "#format"   "{1:i}"
+    "ru"        "{olive}+{1}{default} очков получено за убийство {lightgreen}Ведьмы{default} за один выстрел."
+  }
+  "Choke Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за удушье игрока {lightgreen}{2}{default}."
+  }
+  "Pounce Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за удар игрока {lightgreen}{2}{default}."
+  }
+  "Ride Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за оседлание игрока {lightgreen}{2}{default}."
+  }
+  "Carry Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за переноску игрока {lightgreen}{2}{default}."
+  }
+  "Impact Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за столкновение игрока {lightgreen}{2}{default}."
+  }
+  "Healed Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за излечение игрока {lightgreen}{2}{default}."
+  }
+  "Healed Player Partial"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за частичное излечение игрока {lightgreen}{2}{default}."
+  }
+  "Protected Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за защиту игрока {lightgreen}{2}{default}."
+  }
+  "Revived Player"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за оживление игрока {lightgreen}{2}{default}."
+  }
+  "Revived Player From Ledge"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за помощь игроку {lightgreen}{2}{default} не упасть с уступа."
+  }
+  "Defibrillator Used"
+  {
+    "#format"   "{1:i},{2:N}"
+    "ru"        "{olive}+{1}{default} очков получено за оживление игрока {lightgreen}{2}{default} из мёртвых."
+  }
+  "Burned Tank"
+  {
+    "#format"   "{1:i}"
+    "ru"        "{olive}+{1}{default} очков получено за поджог {lightgreen}Танка{default}"
+  }
+  "Burned Witch"
+  {
+    "#format"   "{1:i}"
+    "ru"        "{olive}+{1}{default} очков получено за поджог {lightgreen}Ведьмы{default}"
+  }
+  "Round Won"
+  {
+    "#format"   "{1:i}"
+    "ru"        "{olive}+{1}{default} очков получено за победу."
+  }
+  "Round Lost"
+  {
+    "#format"   "{1:i}"
+    "ru"        "{olive}+{1}{default} очков получено за проигрыш."
+  }
+  "Spawn Limit Reached"
+  {
+    "#format"   "{1:s}"
+    "ru"        "Достигнут лимит возрождения для {olive}{1}{default}."
+  }
+  "Heal Limit Reached"
+  {
+    "ru"        "Вы достигли лимита лечения."
+  }
+  "Heal Other"
+  {
+    "#format"   "{1:N},{2:N}"
+    "ru"        "{lightgreen}{1}{default} приобрёл полное исцеление для {lightgreen}{2}{default}"
+  }
+  "Heal Other Failed"
+  {
+    "#format"   "{1:N}"
+    "ru"        "Вы не можете излечить {lightgreen}{1}{default} сейчас."
+  }
+  "Tank Heal Limit"
+  {
+    "#format"   "{1:N},{2:i},{3:i}"
+    "ru"        "{lightgreen}{1}{default} вылечил [{olive}{2}{default}/{olive}{3}{default}] раз."
+  }
+  "Bought Nothing"
+  {
+    "ru"        "Вы ещё ничего не купили."
+  }
+  "Health is Full"
+  {
+    "ru"        "У вас уже есть полное здоровье."
+  }
+  "Tank Allowed in Minutes"
+  {
+    "#format"   "{1:i}"
+    "ru"        "Вы должны подождать {olive}{1}{default} минут, прежде чем вы можете стать танком."
+  }
+  "Tank Allowed in Seconds"
+  {
+    "#format"   "{1:i}"
+    "ru"        "Вы должны подождать {olive}{1}{default} секунд, прежде чем вы можете стать танком."
+  }
+  "Tank Not Allowed in Final"
+  {
+    "ru"        "Танк не допускается в конце."
+  }
+  "Announce Witch Purchase"
+  {
+    "#format"   "{1:N},{2:s}"
+    "ru"        "{lightgreen}{1}{default} создал {lightgreen}{2}{default}"
+  }
+  "Announce Tank Purchase"
+  {
+    "#format"   "{1:N},{2:s}"
+    "ru"        "{lightgreen}{1}{default} создал {lightgreen}{2}{default}"
+  }
+  "Announce Horde Purchase"
+  {
+    "#format"   "{1:N},{2:s}"
+    "ru"        "{lightgreen}{1}{default} создал {lightgreen}{2}{default}"
+  }
+  "Announce Mob Purchase"
+  {
+    "#format"   "{1:N},{2:s}"
+    "ru"        "{lightgreen}{1}{default} создал {lightgreen}{2}{default}"
+  }
+  "Announce Uncommon Mob Purchase"
+  {
+    "#format"   "{1:N},{2:s}"
+    "ru"        "{lightgreen}{1}{default} создал {lightgreen}{2}{default}"
+  }
+  "Round End Show Points"
+  {
+    "#format"   "{1:N},{2:i}"
+    "ru"        "{lightgreen}{1}{default} закончил раунд с {olive}{2}{default} очками."
+  }
+  "Insufficient Funds Announce"
+  {
+    "#format"   "{1:N},{2:i},{3:s}"
+    "ru"        "{lightgreen}{1}{default} требует {olive}{2}{default} очков, чтобы купить {olive}{3}{default}."
+  }
+  "Insufficient Funds"
+  {
+    "#format"   "{1:i},{2:s}"
+    "ru"        "Вам нужно {olive}{1}{default} очков, чтобы купить {olive}{2}{default}."
+  }
+  "Class Limit Reached"
+  {
+    "#format"   "{1:s}"
+    "ru"        "Достигнут лимит класса для {olive}{1}{default}."
+  }
+}
