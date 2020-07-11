@@ -9,6 +9,7 @@ builder.SetBuildFolder('package')
 folder_list = [
   #'addons/sourcemod/extensions',
   'addons/sourcemod/translations',
+  'addons/sourcemod/translations/ru',
   'addons/sourcemod/scripting',
   'addons/sourcemod/scripting/include',
   #'addons/sourcemod/gamedata',
@@ -72,6 +73,11 @@ CopyFiles('configs/nps', 'addons/sourcemod/configs/nps',
 
 # Translation Files
 CopyFiles('translations', 'addons/sourcemod/translations',
+  [
+    'nps_core.phrases.txt',
+  ]
+)
+CopyFiles('translations', 'addons/sourcemod/translations/ru',
   [
     'nps_core.phrases.txt',
   ]
