@@ -1,5 +1,9 @@
 "Phrases"
 {
+  "Points Restore"
+  {
+    "ru"       "Ваши очки были восстановлены"
+  }
   "Reward"
   {
     "#format"   "{1:i}"

@@ -38,7 +38,9 @@ enum NyxConVar {
   ConVar:ConVar_TankDelay,
   ConVar:ConVar_TankAllowedFinal,
   ConVar:ConVar_AnnounceNeeds,
-  ConVar:ConVar_Charity
+  ConVar:ConVar_Charity,
+  ConVar:ConVar_Restore,
+  ConVar:ConVar_Msg
 }
 
 /***
@@ -73,7 +75,8 @@ int g_iStartTimePassed;
 
 int g_iTimeCmd[MAXPLAYERS + 1];
 int g_iLastCmd[MAXPLAYERS + 1];
-
+StringMap g_mRestore;
+Handle g_fwdOnBuyZombie;
 /***
  *        ____  __            _          ____      __            ____
  *       / __ \/ /_  ______ _(_)___     /  _/___  / /____  _____/ __/___ _________
@@ -92,7 +95,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart() {
   NyxMsgDebug("OnPluginStart");
-
+  // 3d party plugin bugfixes
+  g_fwdOnBuyZombie = CreateGlobalForward("NpsOnPlayerBuyZombie", ET_Ignore, Param_Cell);
   LoadTranslations("common.phrases");
   LoadTranslations("nps_core.phrases");
 
@@ -117,10 +121,16 @@ public void OnPluginStart() {
   g_hConVars[ConVar_TankAllowedFinal] = CreateConVar("nps_tank_allowed_final", "0", "Tank allowed on the final map?", _, true, 0.0, true, 1.0);
   g_hConVars[ConVar_AnnounceNeeds] = CreateConVar("nps_announce_needs", "1", "Announce when a player tries to buy with insufficient funds.", _, true, 0.0, true, 1.0);
   g_hConVars[ConVar_Charity] = CreateConVar("nps_charity", "1", "Give players with less than the minimal starting points at the start of a round some points?", _, true, 0.0, true, 1.0);
+  g_hConVars[ConVar_Restore] = CreateConVar("nps_restore", "120", "Restore players points if they disconnect and reconnect within X seconds. 0 = disable", _, true, 0.0);
+  g_hConVars[ConVar_Msg] = CreateConVar("nps_msg", "10", "Chat message delay in seconds. 0 = disable", _, true, 0.0);
 
+  HookEvent("player_disconnect", Event_PlayerDisconnect);
   HookEvent("round_start", Event_RoundStart);
   HookEvent("player_spawn", Event_PlayerSpawn);
+  HookEvent("player_team", Event_PlayerTeam);
   HookEvent("player_incapacitated", Event_PlayerIncapacitated);
+
+  g_mRestore = new StringMap();
 }
 
 public void OnMapStart() {
@@ -129,6 +139,7 @@ public void OnMapStart() {
   if (L4D2_IsMissionStartMap()) {
     if (!g_bLateLoad) {
       ResetPlayerStorage();
+      g_mRestore.Clear();
     }
 
     for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
@@ -145,11 +156,29 @@ public void OnMapStart() {
   g_bLateLoad = false;
 }
 
-public void OnClientPostAdminCheck(int client) {
+public void OnClientPutInServer(int client) {
   Player player = new Player(client);
   if (player.UserID != GetClientUserId(client)) {
     player.SetDefaults(GetClientUserId(client));
+    if (IsFakeClient(client) || !g_hConVars[ConVar_Restore].IntValue) return;
+
+    int data[2];
+    char sTemp[64];
+    GetClientAuthId(client, AuthId_Steam3, sTemp, sizeof(sTemp));
+
+    if (g_mRestore.GetArray(sTemp, data, 2) && (GetTime() - data[1]) <= g_hConVars[ConVar_Restore].IntValue){
+        (new Player(client)).Points = data[0];
+        if (g_hConVars[ConVar_Msg].FloatValue)
+            CreateTimer(g_hConVars[ConVar_Msg].FloatValue, TimerMsg, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+    }
   }
+}
+
+public Action TimerMsg(Handle timer, int userId)
+{
+    userId = GetClientOfUserId(userId);
+    if (userId && IsClientInGame(userId))
+        PrintToChat(userId, "%t", "Points Restore");
 }
 
 public void OnGameFrame() {
@@ -181,7 +210,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 
       FakeClientCommandEx(client, "sm_buy %s", "heal"); // I'm so laze u.u
     } else {
-      if (!IsPlayerTank(client)) return Plugin_Continue;
+      if (!IsPlayerTank(client) || IsPlayerIncapacitated(client) || !IsPlayerAlive(client)) return Plugin_Continue;
 
       FakeClientCommandEx(client, "sm_buy %s", "heal");
     }
@@ -227,29 +256,53 @@ public Action L4D2_OnTakeOverZombieBot(int client, int bot) {
   if (IsPlayerTank(client)) NyxMsgDebug("client: %N is the tank", client);
   if (IsPlayerTank(bot)) NyxMsgDebug("bot: %N is the tank", bot);
 
-  for (int i = 1; i <= MaxClients; i++) {
-    if (!IsValidClient(i)) continue;
-
-    Player player = new Player(i);
-    if (player.WasTank) {
-      NyxMsgDebug("Player(%N).TransferHealCount(%N)", i, client);
-      player.WasTank = false;
-      player.TransferHealCount(new Player(client));
-    }
+  Player player = new Player(bot);
+  if (player.WasTank) {
+    NyxMsgDebug("Player(%N).TransferHealCount(%N)", bot, client);
+    player.WasTank = false;
+    player.TransferHealCount(new Player(client));
   }
+  else
+  (new Player(client)).HealCount = 0; // director tank
 
   NyxMsgDebug("L4D2_OnTakeOverZombieBot(bot: %N, client: %N)", bot, client);
   return Plugin_Continue;
 }
 
 public Action L4D2_OnReplaceWithBot(int client, bool flag) {
-  if (!IsPlayerTank(client)) return Plugin_Continue;
 
+  if (!IsPlayerTank(client) || IsFakeClient(client)) return Plugin_Continue;
   Player player = new Player(client);
-  player.WasTank = true;
+  if (player.HealCount){
+    DataPack ndp;
+    CreateDataTimer(0.1, TimerFindBot, ndp, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+    ndp.WriteCell(GetTime() + 5);
+    ndp.WriteCell(player.HealCount);
+    player.HealCount = 0;
+  }
 
   NyxMsgDebug("L4D2_OnReplaceWithBot(client: %N, flag: %d)", client, flag);
   return Plugin_Continue;
+}
+
+public Action TimerFindBot(Handle timer, DataPack pack)
+{
+	pack.Reset(false);
+	int time = pack.ReadCell();
+	int count = pack.ReadCell();
+
+	if (GetTime() > time)
+		return Plugin_Stop;
+
+	for (int i = 1; i <= MaxClients; i++) {
+      if (!IsClientInGame(i) || !IsPlayerTank(i) || !IsFakeClient(i)) continue;
+      Player player = new Player(i);
+      if (player.WasTank) continue;
+      player.WasTank = true;
+      player.HealCount = count;
+      return Plugin_Stop;
+	}
+	return Plugin_Continue;
 }
 
 public Action L4D2_OnSwapTeams() {
@@ -284,6 +337,12 @@ public Action L4D2_OnSwapTeams() {
  *    /_____/ |___/\___/_/ /_/\__/____/
  *
  */
+public void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast) {
+  int client = GetClientOfUserId(event.GetInt("userid"));
+  if (client && IsClientInGame(client) && !IsFakeClient(client)){
+    (new Player(client)).HealCount = 0;
+	}
+}
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast) {
   NyxMsgDebug("Event_RoundStart");
@@ -322,6 +381,24 @@ public Action Event_PlayerIncapacitated(Event event, const char[] name, bool don
   DisplayInstructorHint(victim, "You can heal while you're down with the USE key", "icon_button");
 
   return Plugin_Continue;
+}
+
+public void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast) {
+  if (event.GetBool("bot")) return;
+  int client = GetClientOfUserId(event.GetInt("userid"));
+  if (!client) return;
+  char sTemp[64];
+  event.GetString("reason", sTemp, sizeof(sTemp));
+
+  if (StrEqual("Disconnect by user.", sTemp)){
+
+	GetClientAuthId(client, AuthId_Steam3, sTemp, sizeof(sTemp));
+	Player player = new Player(client);
+	int data[2];
+	data[0] = player.Points;
+	data[1] = GetTime();
+	g_mRestore.SetArray(sTemp, data, 2);
+  }
 }
 
 /***
@@ -830,7 +907,7 @@ bool CanUse(int client, any[eCatalog] item, char[] buffer, int maxlength) {
     // are we a tank?
     if (IsPlayerTank(client)) {
       // tank death loop fix
-      if (GetEntProp(client, Prop_Send, "m_nSequence") >= 65) { // start of tank death animation 67-77
+      if (GetEntProp(client, Prop_Send, "m_nSequence") >= 65 || !IsPlayerAlive(client)) { // start of tank death animation 67-77
         NyxPrintToChat(client, "%t", "Must Be Alive");
         Format(buffer, maxlength, "%t", "Must Be Alive");
         return false;
@@ -907,7 +984,7 @@ void BuyItem(int buyer, int receiver, any[eCatalog] item, bool dontRun=false) {
     }
   }
 
-  if (StrEqual(item[Catalog_Item], "health", false)) {
+  if (IsPlayerTank(buyer) && StrEqual(item[Catalog_Item], "health", false)) {
     player.HealCount++;
   }
 }
@@ -917,10 +994,12 @@ bool SpawnZombiePurchase(int client, L4D2ClassType class) {
     if (IsPlayerGhost(client)) {
       if (class == L4D2Class_Tank) {
         SpawnTankPurchase(client);
+        CallFwd(client);
         return true;
       }
 
       L4D2_SetInfectedClass(client, class);
+      CallFwd(client);
       return true;
     }
 
@@ -929,12 +1008,14 @@ bool SpawnZombiePurchase(int client, L4D2ClassType class) {
 
   if (class == L4D2Class_Tank) {
     SpawnTankPurchase(client);
+    CallFwd(client);
     return true;
   }
 
   SetEntProp(client, Prop_Send, "m_iPlayerState", 6);
   L4D2_BecomeGhost(client);
   L4D2_SetInfectedClass(client, class);
+  CallFwd(client);
   return true;
 }
 
@@ -944,4 +1025,12 @@ void SpawnTankPurchase(int client) {
   float pos[3]; GetClientEyePosition(client, pos);
   L4D2_GetRandomPZSpawnPosition(L4D2_GetClientClass(client), _, client, pos);
   TeleportEntity(client, pos, NULL_VECTOR, NULL_VECTOR);
+  Player player = new Player(client);
+  player.HealCount = 0;
+}
+
+void CallFwd(int client){
+	Call_StartForward(g_fwdOnBuyZombie);
+	Call_PushCell(client);
+	Call_Finish();
 }
