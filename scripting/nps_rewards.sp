@@ -193,8 +193,6 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
   int attacker = GetClientOfUserId(event.GetInt("attacker"));
   //bool headshot = event.GetBool("headshot");
 
-  (new Player(victim)).HealCount = 0;
-
   if (!IsValidClient(attacker)) return Plugin_Continue;
   if (IsPlayerSurvivor(attacker)) {
     if (!IsPlayerInfected(victim)) return Plugin_Continue;

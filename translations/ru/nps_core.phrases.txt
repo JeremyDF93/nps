@@ -83,6 +83,10 @@
   {
     "ru"        "Вы должны быть выведены из строя, чтобы сделать это."
   }
+  "Must Be On Fire"
+  {
+    "ru"        "Вы должны гореть, чтобы сделать это."
+  }
   "Must Not Be Grabbed"
   {
     "ru"        "Вы не можете сделать это, пока вас схватили."
@@ -282,6 +286,11 @@
   "Tank Not Allowed in Final"
   {
     "ru"        "Танк не допускается в конце."
+  }
+  "Self-Extinguish"
+  {
+    "#format"   "{1:N}"
+    "ru"        "{lightgreen}{1}{default} потушил себя"
   }
   "Announce Witch Purchase"
   {

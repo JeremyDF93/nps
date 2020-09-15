@@ -96,7 +96,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnPluginStart() {
   NyxMsgDebug("OnPluginStart");
   // 3d party plugin bugfixes
-  g_fwdOnBuyZombie = CreateGlobalForward("NpsOnPlayerBuyZombie", ET_Ignore, Param_Cell);
+  g_fwdOnBuyZombie = CreateGlobalForward("NPS_OnPlayerBuyZombie", ET_Ignore, Param_Cell);
   LoadTranslations("common.phrases");
   LoadTranslations("nps_core.phrases");
 
@@ -127,8 +127,8 @@ public void OnPluginStart() {
   HookEvent("player_disconnect", Event_PlayerDisconnect);
   HookEvent("round_start", Event_RoundStart);
   HookEvent("player_spawn", Event_PlayerSpawn);
-  HookEvent("player_team", Event_PlayerTeam);
   HookEvent("player_incapacitated", Event_PlayerIncapacitated);
+  HookEvent("tank_spawn", Event_TankSpawn);
 
   g_mRestore = new StringMap();
 }
@@ -141,12 +141,10 @@ public void OnMapStart() {
       ResetPlayerStorage();
       g_mRestore.Clear();
     }
-
-    for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
-      g_iSpawnCount[i] = 0;
-    }
   }
-
+  for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
+    g_iSpawnCount[i] = 0;
+  }
   for (int i = 1; i <= MaxClients; i++) {
     g_iLastCmd[i] = 0;
   }
@@ -157,9 +155,13 @@ public void OnMapStart() {
 }
 
 public void OnClientPutInServer(int client) {
+  if (!client) return;
   Player player = new Player(client);
+  player.WasTank = false;
+
   if (player.UserID != GetClientUserId(client)) {
     player.SetDefaults(GetClientUserId(client));
+
     if (IsFakeClient(client) || !g_hConVars[ConVar_Restore].IntValue) return;
 
     int data[2];
@@ -240,8 +242,10 @@ public Action L4D2_OnFirstSurvivorLeftSafeArea(int client) {
 
 public Action L4D2_OnReplaceTank(int tank, int new_tank) {
   NyxMsgDebug("L4D_OnReplaceTank(tank: %N, newtank: %N)", tank, new_tank);
-  Player player = new Player(tank);
-  player.TransferHealCount(new Player(new_tank));
+  if (tank != new_tank){
+    Player player = new Player(tank);
+    player.TransferHealCount(new Player(new_tank));
+  }
 
   return Plugin_Continue;
 }
@@ -260,7 +264,9 @@ public Action L4D2_OnTakeOverZombieBot(int client, int bot) {
   if (player.WasTank) {
     NyxMsgDebug("Player(%N).TransferHealCount(%N)", bot, client);
     player.WasTank = false;
-    player.TransferHealCount(new Player(client));
+    Player tank = new Player(client);
+    tank.WasTank = true;
+    player.TransferHealCount(tank);
   }
   else
   (new Player(client)).HealCount = 0; // director tank
@@ -275,7 +281,7 @@ public Action L4D2_OnReplaceWithBot(int client, bool flag) {
   Player player = new Player(client);
   if (player.HealCount){
     DataPack ndp;
-    CreateDataTimer(0.1, TimerFindBot, ndp, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+    CreateDataTimer(0.1, Timer_FindBot, ndp, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
     ndp.WriteCell(GetTime() + 5);
     ndp.WriteCell(player.HealCount);
     player.HealCount = 0;
@@ -285,24 +291,24 @@ public Action L4D2_OnReplaceWithBot(int client, bool flag) {
   return Plugin_Continue;
 }
 
-public Action TimerFindBot(Handle timer, DataPack pack)
+public Action Timer_FindBot(Handle timer, DataPack pack)
 {
-	pack.Reset(false);
-	int time = pack.ReadCell();
-	int count = pack.ReadCell();
+  pack.Reset(false);
+  int time = pack.ReadCell();
+  int count = pack.ReadCell();
 
-	if (GetTime() > time)
-		return Plugin_Stop;
+  if (GetTime() > time)
+    return Plugin_Stop;
 
-	for (int i = 1; i <= MaxClients; i++) {
+  for (int i = 1; i <= MaxClients; i++) {
       if (!IsClientInGame(i) || !IsPlayerTank(i) || !IsFakeClient(i)) continue;
       Player player = new Player(i);
       if (player.WasTank) continue;
       player.WasTank = true;
       player.HealCount = count;
       return Plugin_Stop;
-	}
-	return Plugin_Continue;
+  }
+  return Plugin_Continue;
 }
 
 public Action L4D2_OnSwapTeams() {
@@ -337,11 +343,15 @@ public Action L4D2_OnSwapTeams() {
  *    /_____/ |___/\___/_/ /_/\__/____/
  *
  */
-public void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast) {
+public Action Event_TankSpawn(Event event, const char[] name, bool dontBroadcast) {
+
   int client = GetClientOfUserId(event.GetInt("userid"));
-  if (client && IsClientInGame(client) && !IsFakeClient(client)){
-    (new Player(client)).HealCount = 0;
-	}
+
+  if (client){
+    Player player = new Player(client);
+    if (!player.WasTank)
+      player.HealCount = 0;
+  }
 }
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast) {
@@ -384,23 +394,16 @@ public Action Event_PlayerIncapacitated(Event event, const char[] name, bool don
 }
 
 public void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast) {
-  if (event.GetBool("bot")) return;
   int client = GetClientOfUserId(event.GetInt("userid"));
-  if (!client) return;
-  char sTemp[64];
-  event.GetString("reason", sTemp, sizeof(sTemp));
-
-  if (StrEqual("Disconnect by user.", sTemp)){
-
-	GetClientAuthId(client, AuthId_Steam3, sTemp, sizeof(sTemp));
-	Player player = new Player(client);
-	int data[2];
-	data[0] = player.Points;
-	data[1] = GetTime();
-	g_mRestore.SetArray(sTemp, data, 2);
-  }
+  if (!client || IsFakeClient(client)) return;
+  char sTemp[32];
+  GetClientAuthId(client, AuthId_Steam3, sTemp, sizeof(sTemp));
+  Player player = new Player(client);
+  int data[2];
+  data[0] = player.Points;
+  data[1] = GetTime();
+  g_mRestore.SetArray(sTemp, data, 2);
 }
-
 /***
  *        ___       __          _          ______                                          __
  *       /   | ____/ /___ ___  (_)___     / ____/___  ____ ___  ____ ___  ____ _____  ____/ /____
@@ -493,7 +496,12 @@ public Action ConCmd_Buy(int client, int args) {
 
         return Plugin_Handled;
       }
-    } else {
+    }
+    else if (StrEqual(item[Catalog_Item], "extinguish")){
+      BuyItem(client, client, item, true);
+      return Plugin_Handled;
+    }
+    else {
       BuyItem(client, client, item);
       return Plugin_Handled;
     }
@@ -951,7 +959,12 @@ bool CanUse(int client, any[eCatalog] item, char[] buffer, int maxlength) {
       return false;
     }
   }
-
+  if (StrEqual(item[Catalog_Item], "extinguish", false)) {
+    if (!IsPlayerAlive(client) || IsPlayerGhost(client) || !(GetEntityFlags(client) & FL_ONFIRE)){
+      Format(buffer, maxlength, "%t", "Must Be On Fire");
+      return false;
+    }
+  }
   return true;
 }
 
@@ -987,6 +1000,12 @@ void BuyItem(int buyer, int receiver, any[eCatalog] item, bool dontRun=false) {
   if (IsPlayerTank(buyer) && StrEqual(item[Catalog_Item], "health", false)) {
     player.HealCount++;
   }
+
+  if (StrEqual(item[Catalog_Item], "extinguish", false)){
+   if (item[Catalog_Announce])
+      NyxPrintToTeam(GetClientTeam(receiver), "%t", "Self-Extinguish", receiver);
+   ExtinguishEntity(receiver);
+  }
 }
 
 bool SpawnZombiePurchase(int client, L4D2ClassType class) {
@@ -994,12 +1013,12 @@ bool SpawnZombiePurchase(int client, L4D2ClassType class) {
     if (IsPlayerGhost(client)) {
       if (class == L4D2Class_Tank) {
         SpawnTankPurchase(client);
-        CallFwd(client);
+        CallFwd_OnBuyZombie(client);
         return true;
       }
 
       L4D2_SetInfectedClass(client, class);
-      CallFwd(client);
+      CallFwd_OnBuyZombie(client);
       return true;
     }
 
@@ -1008,14 +1027,14 @@ bool SpawnZombiePurchase(int client, L4D2ClassType class) {
 
   if (class == L4D2Class_Tank) {
     SpawnTankPurchase(client);
-    CallFwd(client);
+    CallFwd_OnBuyZombie(client);
     return true;
   }
 
   SetEntProp(client, Prop_Send, "m_iPlayerState", 6);
   L4D2_BecomeGhost(client);
   L4D2_SetInfectedClass(client, class);
-  CallFwd(client);
+  CallFwd_OnBuyZombie(client);
   return true;
 }
 
@@ -1027,10 +1046,11 @@ void SpawnTankPurchase(int client) {
   TeleportEntity(client, pos, NULL_VECTOR, NULL_VECTOR);
   Player player = new Player(client);
   player.HealCount = 0;
+  player.WasTank = false;
 }
 
-void CallFwd(int client){
-	Call_StartForward(g_fwdOnBuyZombie);
-	Call_PushCell(client);
-	Call_Finish();
+void CallFwd_OnBuyZombie(int client){
+  Call_StartForward(g_fwdOnBuyZombie);
+  Call_PushCell(client);
+  Call_Finish();
 }

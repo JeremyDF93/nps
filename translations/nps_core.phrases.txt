@@ -83,6 +83,10 @@
   {
     "en"        "You must be incapacitated to do this."
   }
+  "Must Be On Fire"
+  {
+    "en"        "You must be on fire to do this."
+  }
   "Must Not Be Grabbed"
   {
     "en"        "You can not do this while grabbed."
@@ -282,6 +286,11 @@
   "Tank Not Allowed in Final"
   {
     "en"        "Tank is not allowed in final."
+  }
+  "Self-Extinguish"
+  {
+    "#format"   "{1:N}"
+    "en"        "{lightgreen}{1}{default} purchased a {lightgreen}self-extinguish{default}"
   }
   "Announce Witch Purchase"
   {
