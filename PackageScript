@@ -33,7 +33,7 @@ def CopyFiles(src, dest, files):
     source_path = os.path.join(builder.sourcePath, src, source_file)
     builder.AddCopy(source_path, dest_entry)
 
-# Plugin files 
+# Plugin files
 CopyFiles('scripting', 'addons/sourcemod/scripting',
   [
     'nps_catalog.sp',
@@ -44,9 +44,10 @@ CopyFiles('scripting', 'addons/sourcemod/scripting',
   ]
 )
 
-# Include files 
+# Include files
 CopyFiles('scripting/include', 'addons/sourcemod/scripting/include',
   [
+    'nps.inc',
     'nps_catalog.inc',
     'nps_stocks.inc',
     'nps_storage.inc',
