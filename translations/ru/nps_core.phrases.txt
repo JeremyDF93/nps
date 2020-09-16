@@ -1,5 +1,9 @@
 "Phrases"
 {
+  "Points Restore"
+  {
+    "ru"       "Ваши очки были восстановлены"
+  }
   "Reward"
   {
     "#format"   "{1:i}"
@@ -78,6 +82,10 @@
   "Must Be Incapacitated"
   {
     "ru"        "Вы должны быть выведены из строя, чтобы сделать это."
+  }
+  "Must Be On Fire"
+  {
+    "ru"        "Вы должны гореть, чтобы сделать это."
   }
   "Must Not Be Grabbed"
   {
@@ -278,6 +286,11 @@
   "Tank Not Allowed in Final"
   {
     "ru"        "Танк не допускается в конце."
+  }
+  "Self-Extinguish"
+  {
+    "#format"   "{1:N}"
+    "ru"        "{lightgreen}{1}{default} потушил себя"
   }
   "Announce Witch Purchase"
   {
