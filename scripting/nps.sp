@@ -291,26 +291,6 @@ public Action L4D2_OnReplaceWithBot(int client, bool flag) {
   return Plugin_Continue;
 }
 
-public Action Timer_FindBot(Handle timer, DataPack pack)
-{
-  pack.Reset(false);
-  int time = pack.ReadCell();
-  int count = pack.ReadCell();
-
-  if (GetTime() > time)
-    return Plugin_Stop;
-
-  for (int i = 1; i <= MaxClients; i++) {
-      if (!IsClientInGame(i) || !IsPlayerTank(i) || !IsFakeClient(i)) continue;
-      Player player = new Player(i);
-      if (player.WasTank) continue;
-      player.WasTank = true;
-      player.HealCount = count;
-      return Plugin_Stop;
-  }
-  return Plugin_Continue;
-}
-
 public Action L4D2_OnSwapTeams() {
   ResetPlayerStorage(true);
 
@@ -333,7 +313,25 @@ public Action L4D2_OnSwapTeams() {
  *
  */
 
+public Action Timer_FindBot(Handle timer, DataPack pack)
+{
+  pack.Reset(false);
+  int time = pack.ReadCell();
+  int count = pack.ReadCell();
 
+  if (GetTime() > time)
+    return Plugin_Stop;
+
+  for (int i = 1; i <= MaxClients; i++) {
+      if (!IsClientInGame(i) || !IsPlayerTank(i) || !IsFakeClient(i)) continue;
+      Player player = new Player(i);
+      if (player.WasTank) continue;
+      player.WasTank = true;
+      player.HealCount = count;
+      return Plugin_Stop;
+  }
+  return Plugin_Continue;
+}
 
 /***
  *        ______                 __
