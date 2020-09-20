@@ -113,6 +113,7 @@ public void OnPluginStart() {
   RegConsoleCmd("sm_tp", ConCmd_ShowTeamPoints);
   RegConsoleCmd("sm_heal", ConCmd_Heal);
   RegConsoleCmd("sm_rp", ConCmd_RequestPoints);
+  RegConsoleCmd("sm_theal", ConCmd_TeamHeal);
 
   // Admin commands
   RegAdminCmd("sm_setpoints", AdmCmd_SetPoints, ADMFLAG_ROOT, "Usage: sm_setpoints <#userid|name> <points>");
@@ -694,16 +695,35 @@ public Action ConCmd_ShowTeamPoints(int client, int args) {
   return Plugin_Handled;
 }
 
+public Action ConCmd_TeamHeal(int client, int args) {
+  if (!IsValidClient(client))
+    return Plugin_Handled;
+
+  any item[eCatalog];
+  if (!FindClientItem(client, "heal", item)) {
+    NyxPrintToChat(client, "%t", "Item Doesn't Exist", "heal");
+    return Plugin_Handled;
+  }
+  if (!CanAfford(client, item)){
+    NyxPrintToChat(client, "%t", "Insufficient Points");
+    return Plugin_Handled;
+  }
+  Display_TeamHealMenu(client);
+  return Plugin_Handled;
+}
+
 public Action ConCmd_Heal(int client, int args) {
   int target = client;
   if (args == 1) {
     target = GetCmdTarget(1, client, false, false);
   }
 
-  if (!IsValidClient(target))
-    return Plugin_Handled;
   if (!IsValidClient(client))
     return Plugin_Handled;
+  if (!IsValidClient(target)){
+    NyxPrintToChat(client, "%t", "Player no longer available");
+    return Plugin_Handled;
+  }
 
   any item[eCatalog];
   if (!FindClientItem(client, "heal", item)) {
@@ -773,7 +793,6 @@ public Action ConCmd_BuyAgain(int client, int args) {
 void Display_GivePointsMenu(int client) {
   Menu menu = new Menu(MenuHandler_GivePoints);
   menu.SetTitle("Select Target");
-  menu.ExitBackButton = true;
   AddTeamToMenu(menu, client);
   menu.Display(client, MENU_TIME_FOREVER);
 }
@@ -870,18 +889,23 @@ public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int 
   }
 }
 
-stock int AddTeamToMenu(Menu menu, int client, int excludeTeam = 0) {
+stock int AddTeamToMenu(Menu menu, int client, int excludeTeam = 0, bool pointsCheck = false, bool healCheck = false) {
   char user_id[12];
   char name[MAX_NAME_LENGTH];
-  int num_clients;
+  int num_clients, team;
 
   for (int i = 1; i <= MaxClients; i++) {
-    if (!IsValidClient(i, true)) continue;
-    if (i == client) continue;
+    if (!IsValidClient(i, !healCheck)) continue;
+    if (!healCheck && i == client) continue;
+    if (pointsCheck && (new Player(i)).Points <= 0) continue;
+    team = GetClientTeam(i);
+
     if (excludeTeam){
-      if (GetClientTeam(i) == excludeTeam || (new Player(i)).Points <= 0) continue;
+      if (team == excludeTeam) continue;
     }
-    else if (GetClientTeam(i) != GetClientTeam(client)) continue;
+    else if (team != GetClientTeam(client)) continue;
+
+    if (healCheck && (!IsPlayerAlive(i) || team == 2 && (IsPlayerGrabbed(i) || !IsPlayerIncapacitated(i)))) continue;
 
     IntToString(GetClientUserId(i), user_id, sizeof(user_id));
     GetClientName(i, name, sizeof(name));
@@ -896,8 +920,7 @@ stock int AddTeamToMenu(Menu menu, int client, int excludeTeam = 0) {
 void Display_RequestPointsMenu(int client) {
   Menu menu = new Menu(MenuHandler_RequestPoints);
   menu.SetTitle("Select Target");
-  menu.ExitBackButton = true;
-  AddTeamToMenu(menu, client, g_hConVars[ConVar_RqTeam].IntValue == 2 ? 1 : 0);
+  AddTeamToMenu(menu, client, g_hConVars[ConVar_RqTeam].IntValue == 2 ? 1 : 0, true);
   menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -1026,6 +1049,33 @@ public int MenuHandler_RequestGivePoints(Menu menu, MenuAction action, int param
 
       if (IsValidClient(target))
         NyxPrintToChat(target, "%t", "Player no longer available");
+    }
+  }
+}
+
+void Display_TeamHealMenu(int client) {
+  Menu menu = new Menu(MenuHandler_TeamHeal);
+  menu.SetTitle("Select Target");
+  AddTeamToMenu(menu, client, _, _, true);
+  menu.Display(client, MENU_TIME_FOREVER);
+}
+
+public int MenuHandler_TeamHeal(Menu menu, MenuAction action, int param1, int param2) {
+  if (action == MenuAction_End) {
+    delete menu;
+  } else if (action == MenuAction_Cancel) {
+    if (param2 == MenuCancel_ExitBack) {
+      if (IsValidClient(param1)) {
+        Display_TeamHealMenu(param1);
+      }
+    }
+  } else if (action == MenuAction_Select) {
+    char info[32];
+    menu.GetItem(param2, info, sizeof(info));
+    FakeClientCommandEx(param1, "sm_heal #%d", StringToInt(info));
+
+    if (IsValidClient(param1)) {
+      Display_TeamHealMenu(param1);
     }
   }
 }
