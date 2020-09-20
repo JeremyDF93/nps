@@ -258,7 +258,6 @@ public Action L4D2_OnReplaceTank(int tank, int new_tank) {
 
   return Plugin_Continue;
 }
-#endif
 
 /*
 [Nyx] L4D2_OnReplaceWithBot(client: Kiwi, flag: 0)
