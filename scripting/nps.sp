@@ -704,8 +704,6 @@ public int MenuHandler_GivePoints(Menu menu, MenuAction action, int param1, int 
         Display_GivePointsMenu(param1);
       }
     }
-
-    return;
   } else if (action == MenuAction_Select) {
     char info[32];
     menu.GetItem(param2, info, sizeof(info));
@@ -760,8 +758,6 @@ public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int 
         Display_GivePointsMenu(param1);
       }
     }
-
-    return;
   } else if (action == MenuAction_Select) {
     char info[32];
     menu.GetItem(param2, info, sizeof(info));
@@ -773,7 +769,7 @@ public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int 
     } else {
       Player player = new Player(param1);
       if (player.Points < amount) {
-        NyxPrintToChat(param1, "%t", "Insufficient Points", amount);
+        NyxPrintToChat(param1, "%t", "Insufficient Points");
       } else {
         int spent = (new Player(target)).GivePoints(amount);
         player.Points -= spent;
