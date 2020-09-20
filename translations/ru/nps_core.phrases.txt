@@ -38,6 +38,21 @@
   {
     "ru"        "Вам не хватает очков."
   }
+  "Insufficient Player Points"
+  {
+	"#format"   "{1:N}"
+    "ru"        "Игроку {lightgreen}{1}{default} не хватает очков."
+  }
+  "Didn't Agree To Give"
+  {
+	"#format"   "{1:N}"
+    "ru"        "{lightgreen}{1}{default} не согласился дать вам очков."
+  }
+   "Waiting For Confirmation"
+  {
+	"#format"   "{1:N}"
+    "ru"        "Ожидание ответа от {lightgreen}{1}{default}..."
+  }
   "No Points"
   {
     "ru"        "У вас нет очков."

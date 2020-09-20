@@ -5,6 +5,7 @@
 
 #define NYXTOOLS_DEBUG 1
 #define NYXTOOLS_TAG "PS"
+#define USE_DELAY_SECONDS 2
 #include <nyxtools>
 #include <nyxtools_cheats>
 #include <nyxtools_l4d2>
@@ -40,7 +41,8 @@ enum NyxConVar {
   ConVar:ConVar_AnnounceNeeds,
   ConVar:ConVar_Charity,
   ConVar:ConVar_Restore,
-  ConVar:ConVar_Msg
+  ConVar:ConVar_Msg,
+  ConVar:ConVar_RqTeam
 }
 
 /***
@@ -75,6 +77,7 @@ int g_iStartTimePassed;
 
 int g_iTimeCmd[MAXPLAYERS + 1];
 int g_iLastCmd[MAXPLAYERS + 1];
+int g_iTickDelay;
 StringMap g_mRestore;
 Handle g_fwdOnBuyZombie;
 /***
@@ -109,6 +112,7 @@ public void OnPluginStart() {
   RegConsoleCmd("sm_sp", ConCmd_ShowPoints);
   RegConsoleCmd("sm_tp", ConCmd_ShowTeamPoints);
   RegConsoleCmd("sm_heal", ConCmd_Heal);
+  RegConsoleCmd("sm_rp", ConCmd_RequestPoints);
 
   // Admin commands
   RegAdminCmd("sm_setpoints", AdmCmd_SetPoints, ADMFLAG_ROOT, "Usage: sm_setpoints <#userid|name> <points>");
@@ -123,6 +127,7 @@ public void OnPluginStart() {
   g_hConVars[ConVar_Charity] = CreateConVar("nps_charity", "1", "Give players with less than the minimal starting points at the start of a round some points?", _, true, 0.0, true, 1.0);
   g_hConVars[ConVar_Restore] = CreateConVar("nps_restore", "120", "Restore players points if they disconnect and reconnect within X seconds. 0 = disable", _, true, 0.0);
   g_hConVars[ConVar_Msg] = CreateConVar("nps_msg", "10", "Chat message delay in seconds. 0 = disable", _, true, 0.0);
+  g_hConVars[ConVar_RqTeam] = CreateConVar("nps_request_points_team", "1", "0=disable, 1=Request points for only team players, 2=Request points for both teams.", _, true, 0.0, true, 2.0);
 
   HookEvent("player_disconnect", Event_PlayerDisconnect);
   HookEvent("round_start", Event_RoundStart);
@@ -131,6 +136,7 @@ public void OnPluginStart() {
   HookEvent("tank_spawn", Event_TankSpawn);
 
   g_mRestore = new StringMap();
+  g_iTickDelay = RoundToNearest(1.0 / GetTickInterval() * USE_DELAY_SECONDS);
 }
 
 public void OnMapStart() {
@@ -201,8 +207,8 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 
   if (buttons & IN_USE) {
     g_iTimeCmd[client] = tickcount;
-    if (g_iTimeCmd[client] > (g_iLastCmd[client] + 30)) {
-      g_iLastCmd[client] = tickcount;
+    if (g_iTimeCmd[client] > g_iLastCmd[client]) {
+      g_iLastCmd[client] = g_iTimeCmd[client] + g_iTickDelay;
     } else {
       return Plugin_Continue;
     }
@@ -261,7 +267,7 @@ public Action L4D2_OnReplaceTank(int tank, int new_tank) {
 public Action L4D2_OnTakeOverZombieBot(int client, int bot) {
   if (!IsPlayerTank(client) && !IsPlayerTank(bot)) return Plugin_Continue;
   NyxMsgDebug("L4D2_OnTakeOverZombieBot(bot: %d %N, client: %d %N)", bot, bot, client, client);
- 
+
   Player player = new Player(bot);
   if (player.WasTank) {
     NyxMsgDebug("Player(%N).TransferHealCount(%N)", bot, client);
@@ -550,43 +556,116 @@ public Action ConCmd_Buy(int client, int args) {
   return Plugin_Handled;
 }
 
-public Action ConCmd_GivePoints(int client, int args) {
-  if (args < 1) {
-    if (!IsValidClient(client)) {
-      NyxMsgReply(client, "Cannot display buy menu to console");
-    }
+public Action ConCmd_RequestPoints(int client, int args) {
+  if (g_hConVars[ConVar_RqTeam].IntValue && client && GetClientTeam(client) != 1){
+    if (args == 2) {
+      char target_name[MAX_TARGET_LENGTH], arg[65];
+      int target_list[MAXPLAYERS], target_count;
+      bool tn_is_ml;
+      GetCmdArg(1, arg, sizeof(arg));
 
-    Display_GivePointsMenu(client);
-    return Plugin_Handled;
+      if ((target_count = ProcessTargetString(
+          arg,
+          client,
+          target_list,
+          MAXPLAYERS,
+          COMMAND_FILTER_NO_BOTS|COMMAND_FILTER_NO_IMMUNITY,
+          target_name,
+          sizeof(target_name),
+          tn_is_ml)) <= 0)
+      {
+        ReplyToTargetError(client, target_count);
+        return Plugin_Handled;
+      }
+
+      int target;
+      int amount = GetCmdIntEx(2, 1, g_hConVars[ConVar_MaxPoints].IntValue, 5);
+
+      for (int i; i < target_count; i++)
+      {
+        target = target_list[i];
+
+        if (target != client && IsValidTeamForRequestPoints(client, target)){
+
+          if ((new Player(target)).Points < amount)
+            NyxPrintToChat(client, "%t", "Insufficient Player Points", target);
+          else
+            Display_ConfirmRequestPointsMenu(client, target, amount);
+        }
+      }
+    }
+    else
+      Display_RequestPointsMenu(client);
   }
+  return Plugin_Handled;
+}
 
-  int target = GetCmdTarget(1, client, false, false);
-  int amount = GetCmdIntEx(2, 1, g_hConVars[ConVar_MaxPoints].IntValue, 5);
+public Action ConCmd_GivePoints(int client, int args) {
+  if (args == 2){
+    char target_name[MAX_TARGET_LENGTH], arg[65];
+    int target_list[MAXPLAYERS], target_count;
+    bool tn_is_ml;
+    GetCmdArg(1, arg, sizeof(arg));
 
-  if (!IsValidClient(target)) {
-    return Plugin_Handled;
-  } else if (client == target) {
-    NyxPrintToChat(client, "%t", "Sent Self Points");
-  } else if (GetClientTeam(client) != GetClientTeam(target)) {
-    NyxPrintToChat(client, "%t", "Sent Wrong Team Points");
-  } else {
-    Player player = new Player(client);
-    int points = player.Points;
-    if (amount > points) {
-      amount = points;
-    }
-
-    int spent = (new Player(target)).GivePoints(amount);
-    if (spent == 0) {
-      NyxPrintToChat(client, "%t", "Sent Zero Points");
+    if ((target_count = ProcessTargetString(
+        arg,
+        client,
+        target_list,
+        MAXPLAYERS,
+        COMMAND_FILTER_NO_BOTS|COMMAND_FILTER_NO_IMMUNITY,
+        target_name,
+        sizeof(target_name),
+        tn_is_ml)) <= 0)
+    {
+      ReplyToTargetError(client, target_count);
       return Plugin_Handled;
     }
 
-    player.Points -= spent;
-    NyxPrintToTeam(GetClientTeam(client), "%t", "Sent Points", client, spent, target);
-    NyxPrintToChat(client, "%t", "Points Left", player.Points);
-  }
+    int target;
+    int amount = GetCmdIntEx(2, 1, g_hConVars[ConVar_MaxPoints].IntValue, 5);
 
+    if (target_count == 1){
+        target = target_list[0];
+        if (client == target) {
+        NyxPrintToChat(client, "%t", "Sent Self Points");
+        } else if (GetClientTeam(client) != GetClientTeam(target)) {
+        NyxPrintToChat(client, "%t", "Sent Wrong Team Points");
+        }
+      }
+    else {
+      int points, spent, team = GetClientTeam(client);
+      Player player = new Player(client);
+      bool bGive;
+      for (int i; i < target_count; i++)
+      {
+        target = target_list[i];
+        if (client == target || team != GetClientTeam(target)) continue;
+
+        bGive = true;
+        points = player.Points;
+        if (amount > points) {
+          amount = points;
+        }
+
+        spent = (new Player(target)).GivePoints(amount);
+        if (spent == 0) {
+          NyxPrintToChat(client, "%t", "Sent Zero Points");
+          break;
+        }
+
+        player.Points -= spent;
+        NyxPrintToTeam(team, "%t", "Sent Points", client, spent, target);
+      }
+      if (bGive)
+        NyxPrintToChat(client, "%t", "Points Left", player.Points);
+    }
+  }
+   else {
+    if (!IsValidClient(client))
+      NyxMsgReply(client, "Cannot display buy menu to console");
+    else
+      Display_GivePointsMenu(client);
+  }
   return Plugin_Handled;
 }
 
@@ -638,7 +717,8 @@ public Action ConCmd_Heal(int client, int args) {
   }
 
   char error[255];
-  if (CanAfford(client, item) && CanUse(target, item, error, sizeof(error))) {
+  bool bCanAfford = CanAfford(client, item);
+  if (bCanAfford && CanUse(target, item, error, sizeof(error))) {
     BuyItem(client, target, item);
 
     if (client != target) {
@@ -646,7 +726,10 @@ public Action ConCmd_Heal(int client, int args) {
     }
   } else {
     if (client == target) {
+    if (bCanAfford)
       NyxPrintToChat(client, error);
+    else
+      NyxPrintToChat(client, "%t", "Insufficient Points");
     } else {
       NyxPrintToChat(client, "%t", "Heal Other Failed", target);
     }
@@ -721,16 +804,14 @@ public int MenuHandler_GivePoints(Menu menu, MenuAction action, int param1, int 
       Display_GivePointsMenu(param1);
     }
   }
-
-  return;
 }
 
-void Display_GiveAmountMenu(int client) {
-  Menu menu = new Menu(MenuHandler_GiveAmount);
+void Display_GiveAmountMenu(int client, int target = 0) {
+  Menu menu = new Menu(target ? MenuHandler_RequestAmount : MenuHandler_GiveAmount);
   menu.SetTitle("Select Amount");
   menu.ExitBackButton = true;
 
-  Player player = new Player(client);
+  Player player = new Player(target ? target : client);
   int points = player.Points;
 
   if (points >= 10) menu.AddItem("10", "10 Points");
@@ -787,26 +868,24 @@ public int MenuHandler_GiveAmount(Menu menu, MenuAction action, int param1, int 
       Display_GivePointsMenu(param1);
     }
   }
-
-  return;
 }
 
-stock int AddTeamToMenu(Menu menu, int client) {
+stock int AddTeamToMenu(Menu menu, int client, int excludeTeam = 0) {
   char user_id[12];
   char name[MAX_NAME_LENGTH];
-  char display[MAX_NAME_LENGTH + 12];
-
   int num_clients;
 
   for (int i = 1; i <= MaxClients; i++) {
-    if (!IsValidClient(i)) continue;
+    if (!IsValidClient(i, true)) continue;
     if (i == client) continue;
-    if (GetClientTeam(i) != GetClientTeam(client)) continue;
+    if (excludeTeam){
+      if (GetClientTeam(i) == excludeTeam || (new Player(i)).Points <= 0) continue;
+    }
+    else if (GetClientTeam(i) != GetClientTeam(client)) continue;
 
     IntToString(GetClientUserId(i), user_id, sizeof(user_id));
     GetClientName(i, name, sizeof(name));
-    Format(display, sizeof(display), "%s", name);
-    menu.AddItem(user_id, display);
+    menu.AddItem(user_id, name);
 
     num_clients++;
   }
@@ -814,6 +893,142 @@ stock int AddTeamToMenu(Menu menu, int client) {
   return num_clients;
 }
 
+void Display_RequestPointsMenu(int client) {
+  Menu menu = new Menu(MenuHandler_RequestPoints);
+  menu.SetTitle("Select Target");
+  menu.ExitBackButton = true;
+  AddTeamToMenu(menu, client, g_hConVars[ConVar_RqTeam].IntValue == 2 ? 1 : 0);
+  menu.Display(client, MENU_TIME_FOREVER);
+}
+
+public int MenuHandler_RequestPoints(Menu menu, MenuAction action, int param1, int param2) {
+  if (action == MenuAction_End) {
+    delete menu;
+  } else if (action == MenuAction_Cancel) {
+    if (param2 == MenuCancel_ExitBack) {
+      if (IsValidClient(param1)) {
+        Display_RequestPointsMenu(param1);
+      }
+    }
+  } else if (action == MenuAction_Select) {
+    char info[32];
+    menu.GetItem(param2, info, sizeof(info));
+    int userid = StringToInt(info);
+    int target = GetClientOfUserId(userid);
+
+    if (IsValidTeamForRequestPoints(param1, target)) {
+      g_iMenuTarget[param1] = userid;
+      Display_GiveAmountMenu(param1, target);
+      return;
+    } else {
+      NyxPrintToChat(param1, "%t", "Player no longer available");
+    }
+
+    if (IsValidClient(param1)) {
+      Display_RequestPointsMenu(param1);
+    }
+  }
+}
+
+public int MenuHandler_RequestAmount(Menu menu, MenuAction action, int param1, int param2) {
+  if (action == MenuAction_End) {
+    delete menu;
+  } else if (action == MenuAction_Cancel) {
+    if (param2 == MenuCancel_ExitBack) {
+      if (IsValidClient(param1)) {
+        Display_RequestPointsMenu(param1);
+      }
+    }
+  } else if (action == MenuAction_Select) {
+    int target = GetClientOfUserId(g_iMenuTarget[param1]);
+
+    if (IsValidTeamForRequestPoints(param1, target)) {
+      char info[32];
+      menu.GetItem(param2, info, sizeof(info));
+      int amount = StringToInt(info);
+
+      Player player = new Player(target);
+      if (player.Points < amount)
+        NyxPrintToChat(param1, "%t", "Insufficient Player Points", target);
+      else {
+        Display_ConfirmRequestPointsMenu(param1, target, amount);
+        return;
+      }
+    } else {
+        NyxPrintToChat(param1, "%t", "Player no longer available");
+    }
+
+    if (IsValidClient(param1)) {
+      Display_RequestPointsMenu(param1);
+    }
+  }
+}
+
+void Display_ConfirmRequestPointsMenu(int client, int target, int amount) {
+  g_iMenuTarget[target] = GetClientUserId(client);
+  NyxPrintToChat(client, "%t", "Waiting For Confirmation", target);
+
+  Menu menu = new Menu(MenuHandler_RequestGivePoints);
+  char sTemp[64];
+  FormatEx(sTemp, sizeof(sTemp), "%N asks for %d points", client, amount);
+  menu.SetTitle(sTemp);
+  IntToString(amount, sTemp, sizeof(sTemp));
+  menu.AddItem(sTemp, "Yes");
+  menu.AddItem("", "No");
+  menu.ExitButton = true;
+  menu.Display(target, 10);
+}
+
+public int MenuHandler_RequestGivePoints(Menu menu, MenuAction action, int param1, int param2) {
+  if (action == MenuAction_End) {
+    delete menu;
+  } else if (action == MenuAction_Cancel) {
+  int target = GetClientOfUserId(g_iMenuTarget[param1]);
+
+  if (IsValidClient(target))
+    NyxPrintToChat(target, "%t", "Didn't Agree To Give", param1);
+
+  } else if (action == MenuAction_Select) {
+
+    int target = GetClientOfUserId(g_iMenuTarget[param1]);
+
+    if (param2 != 0){
+      if (IsValidClient(target))
+        NyxPrintToChat(target, "%t", "Didn't Agree To Give", param1);
+      return;
+    }
+    if (IsValidTeamForRequestPoints(param1, target)) {
+      char info[32];
+      menu.GetItem(param2, info, sizeof(info));
+      int amount = StringToInt(info);
+
+      Player player = new Player(param1);
+      if (player.Points < amount) {
+        NyxPrintToChat(param1, "%t", "Insufficient Points");
+        NyxPrintToChat(target, "%t", "Insufficient Player Points", target);
+      } else {
+        int spent = (new Player(target)).GivePoints(amount);
+        player.Points -= spent;
+
+        if (g_hConVars[ConVar_RqTeam].IntValue == 2)
+          NyxPrintToAll("%t", "Sent Points", param1, spent, target);
+        else
+          NyxPrintToTeam(GetClientTeam(param1), "%t", "Sent Points", param1, spent, target);
+
+        NyxPrintToChat(param1, "%t", "Points Left", player.Points);
+
+        if (spent == 0) {
+          NyxPrintToChat(param1, "%t", "Sent Zero Points");
+        }
+      }
+    } else {
+      NyxPrintToChat(param1, "%t", "Player no longer available");
+
+      if (IsValidClient(target))
+        NyxPrintToChat(target, "%t", "Player no longer available");
+    }
+  }
+}
 /***
  *        ______                 __  _
  *       / ____/_  ______  _____/ /_(_)___  ____  _____
@@ -822,6 +1037,16 @@ stock int AddTeamToMenu(Menu menu, int client) {
  *    /_/    \__,_/_/ /_/\___/\__/_/\____/_/ /_/____/
  *
  */
+
+bool IsValidTeamForRequestPoints(int client, int target)
+{
+  return IsValidClient(client, true) && IsValidClient(target, true) && (g_hConVars[ConVar_RqTeam].IntValue == 2 ? GetClientTeam(target) != 1 : GetClientTeam(client) == GetClientTeam(target));
+}
+
+void HealPlayer(int client)
+{
+  SetEntityHealth(client, GetEntProp(client, Prop_Data, "m_iMaxHealth"));
+}
 
 bool CanAfford(int client, any[eCatalog] item) {
   Player player = new Player(client);
@@ -969,18 +1194,6 @@ bool CanUse(int client, any[eCatalog] item, char[] buffer, int maxlength) {
 
 void BuyItem(int buyer, int receiver, any[eCatalog] item, bool dontRun=false) {
   Player player = new Player(buyer);
-
-  if (strlen(item[Catalog_CommandArgs]) == 0) {
-    strcopy(item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]), item[Catalog_Item]);
-  }
-
-  if (!dontRun) {
-    bool success = ExecuteCheatCommand(receiver, "%s %s", item[Catalog_Command], item[Catalog_CommandArgs]);
-    if (!success) {
-      NyxPrintToChat(buyer, "An internal error occurred while executing this command.");
-    }
-  }
-
   player.Points -= item[Catalog_Cost];
   player.SetLastItem(item[Catalog_Item]);
 
@@ -995,15 +1208,30 @@ void BuyItem(int buyer, int receiver, any[eCatalog] item, bool dontRun=false) {
       g_iSpawnCount[class]++;
     }
   }
-
-  if (IsPlayerTank(buyer) && StrEqual(item[Catalog_Item], "health", false)) {
-    player.HealCount++;
+  else if (IsPlayerTank(receiver) && StrEqual(item[Catalog_Item], "health", false)) {
+    if (buyer == receiver)
+      player.HealCount++;
+    else
+      (new Player(receiver)).HealCount++;
+    HealPlayer(receiver); // death loop anim fix
+    return;
+  }
+  else if (StrEqual(item[Catalog_Item], "extinguish", false)){
+    if (item[Catalog_Announce])
+      NyxPrintToTeam(GetClientTeam(receiver), "%t", "Self-Extinguish", receiver);
+    ExtinguishEntity(receiver);
+    return;
   }
 
-  if (StrEqual(item[Catalog_Item], "extinguish", false)){
-   if (item[Catalog_Announce])
-      NyxPrintToTeam(GetClientTeam(receiver), "%t", "Self-Extinguish", receiver);
-   ExtinguishEntity(receiver);
+  if (strlen(item[Catalog_CommandArgs]) == 0) {
+    strcopy(item[Catalog_CommandArgs], sizeof(item[Catalog_CommandArgs]), item[Catalog_Item]);
+  }
+
+  if (!dontRun) {
+    bool success = ExecuteCheatCommand(receiver, "%s %s", item[Catalog_Command], item[Catalog_CommandArgs]);
+    if (!success) {
+      NyxPrintToChat(buyer, "An internal error occurred while executing this command.");
+    }
   }
 }
 

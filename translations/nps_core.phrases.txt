@@ -38,6 +38,21 @@
   {
     "en"        "You don't have enough points."
   }
+  "Insufficient Player Points"
+  {
+	"#format"   "{1:N}"
+    "en"        "{lightgreen}{1}{default} don't have enough points."
+  }
+  "Didn't Agree To Give"
+  {
+	"#format"   "{1:N}"
+    "en"        "{lightgreen}{1}{default} didn't agree to give you points."
+  }
+  "Waiting For Confirmation"
+  {
+	"#format"   "{1:N}"
+    "en"        "Waiting for confirmation from {lightgreen}{1}{default}..."
+  }
   "No Points"
   {
     "en"        "You don't have any points."
