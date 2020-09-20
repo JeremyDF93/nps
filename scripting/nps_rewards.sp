@@ -2,7 +2,7 @@
 #include <sourcemod>
 #include <colors>
 
-#define NYX_DEBUG 1
+#define NYXTOOLS_DEBUG 0
 #define NYXTOOLS_TAG "PS"
 #include <nyxtools>
 #include <nyxtools_l4d2>

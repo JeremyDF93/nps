@@ -3,7 +3,7 @@
 #include <clientprefs>
 #include <colors>
 
-#define NYX_DEBUG 1
+#define NYXTOOLS_DEBUG 1
 #define NYXTOOLS_TAG "PS"
 #include <nyxtools>
 #include <nyxtools_cheats>
@@ -161,7 +161,7 @@ public void OnClientPutInServer(int client) {
 
   if (player.UserID != GetClientUserId(client)) {
     player.SetDefaults(GetClientUserId(client));
-
+    NyxMsgDebug("SetDefaults(%N %d)",client, client);
     if (IsFakeClient(client) || !g_hConVars[ConVar_Restore].IntValue) return;
 
     int data[2];
@@ -169,6 +169,7 @@ public void OnClientPutInServer(int client) {
     GetClientAuthId(client, AuthId_Steam3, sTemp, sizeof(sTemp));
 
     if (g_mRestore.GetArray(sTemp, data, 2) && (GetTime() - data[1]) <= g_hConVars[ConVar_Restore].IntValue){
+        NyxMsgDebug("RESTORED: %d %d", data[0], data[1]);
         (new Player(client)).Points = data[0];
         if (g_hConVars[ConVar_Msg].FloatValue)
             CreateTimer(g_hConVars[ConVar_Msg].FloatValue, TimerMsg, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
@@ -241,14 +242,16 @@ public Action L4D2_OnFirstSurvivorLeftSafeArea(int client) {
 }
 
 public Action L4D2_OnReplaceTank(int tank, int new_tank) {
-  NyxMsgDebug("L4D_OnReplaceTank(tank: %N, newtank: %N)", tank, new_tank);
+  NyxMsgDebug("L4D_OnReplaceTank(tank: %d %N, newtank: %d %N)", tank, tank, new_tank, new_tank);
   if (tank != new_tank){
     Player player = new Player(tank);
+    NyxMsgDebug("Player(%N, HealCount %d).TransferHealCount(%N)", tank, player.HealCount, new_tank);
     player.TransferHealCount(new Player(new_tank));
   }
 
   return Plugin_Continue;
 }
+#endif
 
 /*
 [Nyx] L4D2_OnReplaceWithBot(client: Kiwi, flag: 0)
@@ -257,9 +260,8 @@ public Action L4D2_OnReplaceTank(int tank, int new_tank) {
 */
 public Action L4D2_OnTakeOverZombieBot(int client, int bot) {
   if (!IsPlayerTank(client) && !IsPlayerTank(bot)) return Plugin_Continue;
-  if (IsPlayerTank(client)) NyxMsgDebug("client: %N is the tank", client);
-  if (IsPlayerTank(bot)) NyxMsgDebug("bot: %N is the tank", bot);
-
+  NyxMsgDebug("L4D2_OnTakeOverZombieBot(bot: %d %N, client: %d %N)", bot, bot, client, client);
+ 
   Player player = new Player(bot);
   if (player.WasTank) {
     NyxMsgDebug("Player(%N).TransferHealCount(%N)", bot, client);
@@ -271,7 +273,6 @@ public Action L4D2_OnTakeOverZombieBot(int client, int bot) {
   else
   (new Player(client)).HealCount = 0; // director tank
 
-  NyxMsgDebug("L4D2_OnTakeOverZombieBot(bot: %N, client: %N)", bot, client);
   return Plugin_Continue;
 }
 
@@ -279,6 +280,8 @@ public Action L4D2_OnReplaceWithBot(int client, bool flag) {
 
   if (!IsPlayerTank(client) || IsFakeClient(client)) return Plugin_Continue;
   Player player = new Player(client);
+  NyxMsgDebug("L4D2_OnReplaceWithBot(%d %N, HealCount %d)", client, client, player.HealCount);
+
   if (player.HealCount){
     DataPack ndp;
     CreateDataTimer(0.1, Timer_FindBot, ndp, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
@@ -286,8 +289,6 @@ public Action L4D2_OnReplaceWithBot(int client, bool flag) {
     ndp.WriteCell(player.HealCount);
     player.HealCount = 0;
   }
-
-  NyxMsgDebug("L4D2_OnReplaceWithBot(client: %N, flag: %d)", client, flag);
   return Plugin_Continue;
 }
 
@@ -306,6 +307,7 @@ public Action Timer_FindBot(Handle timer, DataPack pack)
       if (player.WasTank) continue;
       player.WasTank = true;
       player.HealCount = count;
+      NyxMsgDebug("Timer_FindBot bot_tank %d, set HealCount %d", i, count);
       return Plugin_Stop;
   }
   return Plugin_Continue;
@@ -349,6 +351,7 @@ public Action Event_TankSpawn(Event event, const char[] name, bool dontBroadcast
 
   if (client){
     Player player = new Player(client);
+    NyxMsgDebug("tank spawn %N, WasTank %d", client, player.WasTank);
     if (!player.WasTank)
       player.HealCount = 0;
   }

@@ -1,7 +1,7 @@
 #pragma semicolon 1
 #include <sourcemod>
 
-#define NYX_DEBUG 0
+#define NYXTOOLS_DEBUG 0
 #define NYXTOOLS_TAG "PS"
 #include <nyxtools>
 #undef REQUIRE_PLUGIN
