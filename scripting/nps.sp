@@ -134,7 +134,8 @@ public void OnPluginStart() {
   HookEvent("round_start", Event_RoundStart);
   HookEvent("player_spawn", Event_PlayerSpawn);
   HookEvent("player_incapacitated", Event_PlayerIncapacitated);
-  HookEvent("tank_spawn", Event_TankSpawn);
+  HookEvent("player_bot_replace", Event_PlayerBotReplace);
+  HookEvent("bot_player_replace", Event_BotPlayerReplace);
 
   g_mRestore = new StringMap();
   g_iTickDelay = RoundToNearest(1.0 / GetTickInterval() * USE_DELAY_SECONDS);
@@ -259,14 +260,22 @@ public Action L4D2_OnReplaceTank(int tank, int new_tank) {
   return Plugin_Continue;
 }
 
-/*
-[Nyx] L4D2_OnReplaceWithBot(client: Kiwi, flag: 0)
-[Nyx] L4D2_OnTakeOverZombieBot(bot: yankeera7, client: Tank)
-[Nyx] L4D2_OnReplaceWithBot(client: Tank, flag: 0)
-*/
-public Action L4D2_OnTakeOverZombieBot(int client, int bot) {
-  if (!IsPlayerTank(client) && !IsPlayerTank(bot)) return Plugin_Continue;
-  NyxMsgDebug("L4D2_OnTakeOverZombieBot(bot: %d %N, client: %d %N)", bot, bot, client, client);
+/***
+ *        ______                 __
+ *       / ____/   _____  ____  / /______
+ *      / __/ | | / / _ \/ __ \/ __/ ___/
+ *     / /___ | |/ /  __/ / / / /_(__  )
+ *    /_____/ |___/\___/_/ /_/\__/____/
+ *
+ */
+public void Event_BotPlayerReplace(Event event, const char[] name, bool dontBroadcast)
+{
+  int bot = GetClientOfUserId(event.GetInt("bot"));
+  if (!bot || GetEntProp(bot, Prop_Send, "m_zombieClass") != 8) return;
+  int client = GetClientOfUserId(event.GetInt("player"));
+  if (!client) return;
+
+  NyxMsgDebug("Event_BotPlayerReplace(bot: %d %N, client: %d %N)", bot, bot, client, client);
 
   Player player = new Player(bot);
   if (player.WasTank) {
@@ -278,96 +287,34 @@ public Action L4D2_OnTakeOverZombieBot(int client, int bot) {
   }
   else
   (new Player(client)).HealCount = 0; // director tank
-
-  return Plugin_Continue;
 }
 
-public Action L4D2_OnReplaceWithBot(int client, bool flag) {
-
-  if (!IsPlayerTank(client) || IsFakeClient(client)) return Plugin_Continue;
+public void Event_PlayerBotReplace(Event event, const char[] name, bool dontBroadcast)
+{
+  int client = GetClientOfUserId(event.GetInt("player"));
+  if (!client || GetClientTeam(client) != 3 || !IsPlayerTank(client) || IsFakeClient(client)) return;
+  int bot = GetClientOfUserId(event.GetInt("bot"));
+  if (!client) return;
   Player player = new Player(client);
-  NyxMsgDebug("L4D2_OnReplaceWithBot(%d %N, HealCount %d)", client, client, player.HealCount);
+  NyxMsgDebug("Event_PlayerBotReplace(%d %N, %d %N, HealCount %d)", client, client, bot, bot, player.HealCount);
 
   if (player.HealCount){
-    DataPack ndp;
-    CreateDataTimer(0.1, Timer_FindBot, ndp, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
-    ndp.WriteCell(GetTime() + 5);
-    ndp.WriteCell(player.HealCount);
+    Player playerBot = new Player(bot);
+    playerBot.WasTank = true;
+    playerBot.HealCount = player.HealCount;
     player.HealCount = 0;
-  }
-  return Plugin_Continue;
-}
-
-public Action Timer_FindBot(Handle timer, DataPack pack)
-{
-  pack.Reset(false);
-  int time = pack.ReadCell();
-  int count = pack.ReadCell();
-
-  if (GetTime() > time)
-    return Plugin_Stop;
-
-  for (int i = 1; i <= MaxClients; i++) {
-      if (!IsClientInGame(i) || !IsPlayerTank(i) || !IsFakeClient(i)) continue;
-      Player player = new Player(i);
-      if (player.WasTank) continue;
-      player.WasTank = true;
-      player.HealCount = count;
-      NyxMsgDebug("Timer_FindBot bot_tank %d, set HealCount %d", i, count);
-      return Plugin_Stop;
-  }
-  return Plugin_Continue;
-}
-
-public Action L4D2_OnSwapTeams() {
-  ResetPlayerStorage(true);
-
-  for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
-    g_iSpawnCount[i] = 0;
-  }
-
-  g_iStartTime = 0;
-  g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
-
-  return Plugin_Continue;
-}
-
-/***
- *      _______
- *     /_  __(_)___ ___  ___  __________
- *      / / / / __ `__ \/ _ \/ ___/ ___/
- *     / / / / / / / / /  __/ /  (__  )
- *    /_/ /_/_/ /_/ /_/\___/_/  /____/
- *
- */
-
-
-
-/***
- *        ______                 __
- *       / ____/   _____  ____  / /______
- *      / __/ | | / / _ \/ __ \/ __/ ___/
- *     / /___ | |/ /  __/ / / / /_(__  )
- *    /_____/ |___/\___/_/ /_/\__/____/
- *
- */
-public Action Event_TankSpawn(Event event, const char[] name, bool dontBroadcast) {
-
-  int client = GetClientOfUserId(event.GetInt("userid"));
-
-  if (client){
-    Player player = new Player(client);
-    NyxMsgDebug("tank spawn %N, WasTank %d", client, player.WasTank);
-    if (!player.WasTank)
-      player.HealCount = 0;
   }
 }
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast) {
   NyxMsgDebug("Event_RoundStart");
+  ResetPlayerStorage(true);
   g_iStartTime = 0;
   g_bTankAllowed = (g_hConVars[ConVar_TankDelay].IntValue == 0);
 
+  for (int i = 0; i < view_as<int>(L4D2ClassType); i++) {
+    g_iSpawnCount[i] = 0;
+  }
   if (g_hConVars[ConVar_Charity].BoolValue) {
     for (int i = 1; i <= MaxClients; i++) {
       if (!IsValidClient(i)) continue;
