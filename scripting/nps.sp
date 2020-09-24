@@ -572,13 +572,30 @@ public Action ConCmd_GivePoints(int client, int args) {
     int amount = GetCmdIntEx(2, 1, g_hConVars[ConVar_MaxPoints].IntValue, 5);
 
     if (target_count == 1){
-        target = target_list[0];
-        if (client == target) {
+      target = target_list[0];
+      if (client == target) {
         NyxPrintToChat(client, "%t", "Sent Self Points");
-        } else if (GetClientTeam(client) != GetClientTeam(target)) {
+      } else if (GetClientTeam(client) != GetClientTeam(target)) {
         NyxPrintToChat(client, "%t", "Sent Wrong Team Points");
-        }
       }
+      else {
+        Player player = new Player(client);
+        int points = player.Points;
+        if (amount > points) {
+          amount = points;
+        }
+        
+        int spent = (new Player(target)).GivePoints(amount);
+        if (spent == 0) {
+          NyxPrintToChat(client, "%t", "Sent Zero Points");
+          return Plugin_Handled;
+        }
+        
+        player.Points -= spent;
+        NyxPrintToTeam(GetClientTeam(client), "%t", "Sent Points", client, spent, target);
+        NyxPrintToChat(client, "%t", "Points Left", player.Points);
+      }
+    }
     else {
       int points, spent, team = GetClientTeam(client);
       Player player = new Player(client);
@@ -607,7 +624,7 @@ public Action ConCmd_GivePoints(int client, int args) {
         NyxPrintToChat(client, "%t", "Points Left", player.Points);
     }
   }
-   else {
+  else {
     if (!IsValidClient(client))
       NyxMsgReply(client, "Cannot display buy menu to console");
     else
@@ -977,7 +994,8 @@ public int MenuHandler_RequestGivePoints(Menu menu, MenuAction action, int param
         NyxPrintToChat(target, "%t", "Insufficient Player Points", target);
       } else {
         int spent = (new Player(target)).GivePoints(amount);
-        player.Points -= spent;
+        if (spent != 0)
+          player.Points -= spent;
 
         if (g_hConVars[ConVar_RqTeam].IntValue == 2)
           NyxPrintToAll("%t", "Sent Points", param1, spent, target);
@@ -985,10 +1003,6 @@ public int MenuHandler_RequestGivePoints(Menu menu, MenuAction action, int param
           NyxPrintToTeam(GetClientTeam(param1), "%t", "Sent Points", param1, spent, target);
 
         NyxPrintToChat(param1, "%t", "Points Left", player.Points);
-
-        if (spent == 0) {
-          NyxPrintToChat(param1, "%t", "Sent Zero Points");
-        }
       }
     } else {
       NyxPrintToChat(param1, "%t", "Player no longer available");
