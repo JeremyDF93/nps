@@ -3,7 +3,7 @@
 #include <clientprefs>
 #include <colors>
 
-#define NYXTOOLS_DEBUG 1
+#define NYXTOOLS_DEBUG 0
 #define NYXTOOLS_TAG "PS"
 #define USE_DELAY_SECONDS 2
 #include <nyxtools>
